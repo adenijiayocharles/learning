@@ -40,13 +40,12 @@ tooling, they're what the course's exercises run against a local cluster.
 user-facing description). New courses should pick one of these rather than
 inventing a third:
 
-- **Hands-on lab** (`kubernetes/`): numbered module folders (`01-...`
-  through `12-...`), each with a `README.md` (concept + exercise), starter
+- **Hands-on lab** (`docker/`, `kubernetes/`): numbered module folders
+  (`01-...` through `12-...`), each with a `README.md` (concept + exercise), starter
   YAML/config with `# TODO` placeholders under `manifests/`, and a matching
-  `solution/`. `apps/hello-app/` is the *one* shared Flask demo app reused
-  across every module (`Dockerfile.starter` has TODOs; `Dockerfile.solution`
-  and the checked-in `Dockerfile` are the working reference). `PLAN.md`
-  documents the original design rationale for the curriculum.
+  `solution/`. Each course reuses one shared Flask app: Docker has
+  `apps/visit-counter/`; Kubernetes has `apps/hello-app/`. `PLAN.md` documents
+  each curriculum's design rationale.
 - **Interactive simulation** (`cap-theorem/`): no modules — `index.html`
   *is* the course (a Three.js scene), and `README.md` is the sourced
   written explanation of what it simulates, not a lab guide.
@@ -56,8 +55,8 @@ Adding a course means creating its folder, then adding a card to root
 `README.md`.
 
 **Each course's `index.html` is a single self-contained file** — no
-bundler, no separate JS/CSS files. All three (`index.html`,
-`kubernetes/index.html`, `cap-theorem/index.html`) share one design-token
+bundler, no separate JS/CSS files. All four (`index.html`,
+`docker/index.html`, `kubernetes/index.html`, `cap-theorem/index.html`) share one design-token
 system, copy-pasted intentionally rather than factored into a shared
 stylesheet (there's no build step to assemble one):
 
@@ -84,14 +83,14 @@ opened via `file://`. Before bumping that version, re-check cdnjs's file
 listing for the target version rather than assuming a newer build still
 has a global script.
 
-**Kubernetes course content is authored once and rendered twice**: the
-numbered module `README.md` files are the source of truth;
-`kubernetes/index.html` embeds that same markdown text verbatim inside
+**Hands-on course content is authored once and rendered twice**: numbered
+module `README.md` files are the source of truth; each course `index.html`
+embeds that same markdown text inside
 `<script type="text/markdown" id="md-NN">` blocks (not JS string literals —
 this sidesteps escaping problems since the content contains triple-backtick
-code fences and inline code), then renders it client-side via
-`marked.parse()` + `highlight.js`. Editing a module's `README.md` requires
-the matching edit in `kubernetes/index.html`'s corresponding
+code fences and inline code), then renders it client-side via `marked.parse()`
++ `highlight.js`. Editing a module's `README.md` requires the matching edit in
+that course's `index.html` corresponding
 `<script type="text/markdown">` block to keep the two in sync — nothing
 does this automatically.
 

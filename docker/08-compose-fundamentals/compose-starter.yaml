@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: ../apps/visit-counter
+    ports:
+      - "127.0.0.1:${APP_PORT:-5050}:5000"
+    environment:
+      MESSAGE: ${MESSAGE:-Hello from Compose!}
+      REDIS_HOST: cache
+    depends_on:
+      - cache
+
+  cache:
+    image: redis:8-alpine
+    volumes:
+      # TODO: Mount redis-data at /data.
+
+volumes:
+  # TODO: Declare redis-data.

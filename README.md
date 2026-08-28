@@ -14,6 +14,7 @@ want to jump straight in.
 
 | Course | Format | Description |
 |--------|--------|-------------|
+| [Docker](./docker/) | 12-module hands-on lab | From first container to a reliable Compose stack — build, connect, persist, harden, and troubleshoot one evolving app. |
 | [Kubernetes](./kubernetes/) | 12-module hands-on lab | From Docker fundamentals to Helm — build, break, and fix a real local cluster with one running app throughout. |
 | [CAP Theorem](./cap-theorem/) | Interactive simulation | Cut off a node, watch the consistency/availability tradeoff play out, then heal it — a low-poly, isometric, accurately-sourced look at what CAP theorem actually says. |
 

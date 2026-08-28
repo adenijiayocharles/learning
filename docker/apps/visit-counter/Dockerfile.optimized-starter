@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12-slim AS build
+
+WORKDIR /build
+COPY requirements.txt .
+# TODO: Build dependency wheels into /wheels.
+
+FROM python:3.12-slim AS runtime
+
+# TODO: Create an unprivileged user named appuser with UID 10001, then create
+# /data and make that user its owner.
+WORKDIR /app
+
+# TODO: Copy wheels from the build stage and install them.
+COPY app.py .
+
+# TODO: Switch to appuser.
+EXPOSE 5000
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

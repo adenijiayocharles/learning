@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: ../apps/visit-counter
+    ports:
+      - "127.0.0.1:${APP_PORT:-5050}:5000"
+    environment:
+      REDIS_HOST: cache
+    depends_on:
+      cache:
+        # TODO: Wait for the cache service to report healthy.
+        condition: TODO
+    restart: unless-stopped
+
+  cache:
+    image: redis:8-alpine
+    healthcheck:
+      # TODO: Run redis-cli ping as the health test.
+      test: ["CMD", "TODO"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

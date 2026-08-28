@@ -1,0 +1,2 @@
+docker volume create visit-data
+docker run -d --name visit-counter --mount type=volume,src=visit-data,dst=/data -p 127.0.0.1:5050:5000 visit-counter:v1

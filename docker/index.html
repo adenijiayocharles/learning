@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker Field Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --bg: #F4F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAEEF2;
+    --sidebar-bg: #E2E7EC;
+    --ink: #16202B;
+    --muted: #5B6B7A;
+    --accent: #1677B8;
+    --accent-ink: #FFFFFF;
+    --line: #D7DEE5;
+    --code-bg: #121A22;
+    --code-ink: #E7ECF1;
+    --code-line: #26323D;
+    --good: #2E7D53;
+    --shadow: 0 8px 24px rgba(22, 32, 43, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E141B;
+      --surface: #141C25;
+      --surface-2: #0B1117;
+      --sidebar-bg: #080C11;
+      --ink: #E7ECF1;
+      --muted: #8CA0B3;
+      --accent: #58B9F2;
+      --accent-ink: #07151E;
+      --line: #26323D;
+      --code-bg: #0A0F14;
+      --code-ink: #DCE6EE;
+      --code-line: #223040;
+      --good: #5FBE8A;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E141B;
+    --surface: #141C25;
+    --surface-2: #0B1117;
+    --sidebar-bg: #080C11;
+    --ink: #E7ECF1;
+    --muted: #8CA0B3;
+    --accent: #58B9F2;
+    --accent-ink: #07151E;
+    --line: #26323D;
+    --code-bg: #0A0F14;
+    --code-ink: #DCE6EE;
+    --code-line: #223040;
+    --good: #5FBE8A;
+    --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, .nav-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 0.88em;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+
+  .sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.75rem 1.5rem 1.25rem;
+  }
+
+  .brand-mark { color: var(--accent); flex-shrink: 0; }
+
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  .brand-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  a.home-link {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: none;
+    margin: 0 1.5rem 1.25rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  a.home-link:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+
+  .progress-block {
+    padding: 0 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-track {
+    height: 5px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  nav.module-nav {
+    padding: 0.75rem 0.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    border-left: 3px solid transparent;
+    color: var(--ink);
+    cursor: pointer;
+    background: transparent;
+    font-size: 0.88rem;
+  }
+
+  .nav-item:hover { background: var(--surface); }
+
+  .nav-item.active {
+    background: var(--surface);
+    border-left-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .nav-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    width: 1.4rem;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nav-item .label { flex: 1; min-width: 0; }
+
+  .nav-item .check {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    background: transparent;
+  }
+
+  .nav-item .check:hover { border-color: var(--good); }
+
+  .nav-item .check.done {
+    background: var(--good);
+    border-color: var(--good);
+    color: var(--surface);
+  }
+
+  .nav-item.overview .num { color: var(--muted); }
+
+  /* ---------- Mobile nav toggle ---------- */
+
+  .mobile-bar { display: none; }
+
+  /* ---------- Content ---------- */
+
+  .content-wrap {
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3.5rem clamp(1.5rem, 5vw, 3rem) 6rem;
+  }
+
+  .content-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .content h1.page-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+    text-wrap: balance;
+  }
+
+  .content .page-concept {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin: 0 0 2.5rem;
+  }
+
+  .content h2 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    margin: 2.75rem 0 1rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .content h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+  .content h3 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 2rem 0 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.85rem;
+  }
+
+  .content p { margin: 0 0 1.1rem; max-width: 68ch; }
+  .content ul, .content ol { margin: 0 0 1.1rem; padding-left: 1.4rem; max-width: 68ch; }
+  .content li { margin-bottom: 0.5rem; }
+  .content li > ul, .content li > ol { margin-top: 0.5rem; }
+  .content strong { font-weight: 700; }
+
+  .content :not(pre) > code {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 0.1em 0.35em;
+    color: var(--ink);
+  }
+
+  .content blockquote {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    color: var(--ink);
+  }
+  .content blockquote p:last-child { margin-bottom: 0; }
+  .content blockquote strong:first-child { color: var(--accent); }
+
+  .content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+  }
+  .content-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+  .content th, .content td {
+    text-align: left;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .content th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .content td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+
+  .content hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  /* code blocks */
+  .code-block {
+    margin: 0 0 1.5rem;
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    overflow: hidden;
+  }
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.85rem;
+    border-bottom: 1px solid var(--code-line);
+  }
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: #7C8FA1;
+    text-transform: uppercase;
+  }
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    background: transparent;
+    border: 1px solid var(--code-line);
+    color: #B9C6D2;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .content pre {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+  }
+  .content pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--code-ink);
+    background: none;
+    white-space: pre;
+  }
+
+  /* minimal hljs palette, tuned to the code surface */
+  .hljs-comment, .hljs-quote { color: #7C8FA1; font-style: italic; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link { color: #FF8A50; }
+  .hljs-string, .hljs-attr, .hljs-name, .hljs-number, .hljs-symbol, .hljs-bullet, .hljs-addition { color: #9BD98A; }
+  .hljs-built_in, .hljs-title, .hljs-variable, .hljs-template-variable, .hljs-type { color: #7FC8F8; }
+  .hljs-meta, .hljs-deletion { color: #E3A6E0; }
+  .hljs-emphasis { font-style: italic; }
+  .hljs-strong { font-weight: 700; }
+
+  /* footer nav */
+  .content-footer {
+    margin-top: 3.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+  .complete-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    margin-bottom: 1.75rem;
+  }
+  .complete-toggle .check {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+  }
+  .complete-toggle.done { border-color: var(--good); color: var(--good); }
+  .complete-toggle.done .check { background: var(--good); border-color: var(--good); color: var(--surface); }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .pager > a {
+    flex: 1;
+    display: block;
+    border: 1px solid var(--line);
+    padding: 1rem 1.1rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .pager > a:hover { border-color: var(--accent); }
+  .pager > a.next { text-align: right; margin-left: auto; }
+  .pager-dir {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .pager-title { font-family: 'Archivo', sans-serif; font-weight: 700; }
+
+  @media (max-width: 860px) {
+    .sidebar {
+      position: fixed;
+      z-index: 20;
+      left: 0; top: 0;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .mobile-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 0.85rem 1.25rem;
+    }
+    .mobile-bar button {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.4rem 0.65rem;
+      cursor: pointer;
+    }
+    .mobile-bar .mb-title { font-family: 'Archivo', sans-serif; font-weight: 700; }
+    .backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 15;
+    }
+    .backdrop.open { display: block; }
+    .content { padding-top: 2.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar, .progress-fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="backdrop" id="backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="12" width="6" height="6" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="11" y="12" width="6" height="6" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="11" y="4" width="6" height="6" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M2 20H25C23.5 23.2 20.7 25 16.8 25H9.5C5.8 25 3.3 23.3 2 20Z" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M19 14H23L25 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="brand-eyebrow">FIELD MANUAL</div>
+        <div class="brand-title">Docker</div>
+      </div>
+    </div>
+    <a class="home-link" href="../index.html">&larr; Learning Hub</a>
+    <div class="progress-block">
+      <div class="progress-label">
+        <span id="progress-text">0 / 12 complete</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <nav class="module-nav" id="module-nav"></nav>
+  </aside>
+
+  <div class="content-wrap" id="content-wrap">
+    <div class="mobile-bar">
+      <button id="menu-toggle" aria-label="Open module list">&#9776;</button>
+      <span class="mb-title">Docker Field Manual</span>
+    </div>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<script type="text/markdown" id="md-00">
+A hands-on, 12-module course for learning Docker from first principles to
+solid day-to-day working knowledge. Every module introduces one idea, applies
+it to a real local environment, and ends with checks you should be able to
+explain rather than merely copy.
+
+Prefer a browser? Open [`index.html`](./index.html) for a navigable version
+with progress tracking. [`PLAN.md`](./PLAN.md) records the course design and
+verification approach.
+
+## Prerequisites
+
+- A terminal and text editor
+- A working Docker-compatible daemon and `docker` CLI
+- Docker Compose available as `docker compose`
+- `curl` for exercising the demo application
+
+Run `docker version` before starting. Both Client and Server sections must be
+present. The labs use portable CLI behavior and work with Docker Desktop,
+OrbStack, or Docker Engine running Linux containers.
+
+## How each module works
+
+Each numbered folder contains a `README.md` with concepts, exact commands,
+expected observations, and a short verification section. Exercises that need
+configuration provide a TODO-marked starter and a completed `solution/`.
+Attempt the starter before comparing it with the solution.
+
+All modules evolve one Flask application in [`apps/visit-counter`](./apps/visit-counter/).
+It starts as a single file-backed container, then gains Redis, Compose,
+health checks, persistent storage, and an optimized non-root image.
+
+## Modules
+
+| # | Module | Concept |
+|---|--------|---------|
+| 1 | [Containers & Architecture](#01) | Images, containers, client, daemon |
+| 2 | [Lifecycle & Inspection](#02) | Run, stop, logs, exec, inspect |
+| 3 | [Build Your First Image](#03) | Dockerfiles and build context |
+| 4 | [Layers & Cache](#04) | Cache invalidation and image history |
+| 5 | [Runtime Configuration](#05) | Environment, processes, ports |
+| 6 | [Persistent Data](#06) | Volumes and bind mounts |
+| 7 | [Container Networking](#07) | Bridge networks and DNS |
+| 8 | [Compose Fundamentals](#08) | Multi-container application model |
+| 9 | [Reliable Compose](#09) | Health checks and startup ordering |
+| 10 | [Efficient & Safer Images](#10) | Multi-stage builds and non-root users |
+| 11 | [Resources & Troubleshooting](#11) | Limits and debugging workflow |
+| 12 | [Capstone & Distribution](#12) | Complete stack, image transfer, registry |
+
+## Safety and cleanup
+
+Commands use course-specific names and localhost-bound ports. Cleanup steps
+remove only those resources. The course deliberately avoids broad pruning
+commands because they can remove unrelated Docker data.
+</script>
+
+<script type="text/markdown" id="md-01">
+## Concepts
+
+Docker packages an application and its dependencies as an **image**. A
+**container** is a runnable instance of that image. Containers are isolated
+processes, not small virtual machines: Linux namespaces isolate resources and
+cgroups account for and limit them. On macOS and Windows, Docker-compatible
+tools run Linux containers inside a lightweight Linux VM.
+
+Docker uses a client/server design. The `docker` CLI sends API requests to a
+Docker daemon, which manages images, containers, networks, and volumes. The
+client and daemon may be on different machines, so commands such as bind mounts
+refer to paths visible to the daemon.
+
+## Hands-on
+
+1. Confirm both sides are available:
+
+   ```bash
+   docker version
+   docker info
+   ```
+
+   `docker version` should show both Client and Server sections. A client-only
+   result means the CLI is installed but cannot reach the daemon.
+
+2. Run a disposable container:
+
+   ```bash
+   docker run --rm hello-world
+   ```
+
+   If the image is not local, Docker pulls it from its configured registry,
+   creates a container, starts its process, and removes the stopped container
+   because of `--rm`.
+
+3. Inspect the image that remains:
+
+   ```bash
+   docker image ls hello-world
+   docker image inspect hello-world
+   ```
+
+4. Run a shell in an Alpine container and inspect its environment:
+
+   ```bash
+   docker run --rm -it alpine:3.22 sh
+   cat /etc/os-release
+   hostname
+   exit
+   ```
+
+   The displayed distribution is the container filesystem, while the kernel is
+   supplied by the Linux host or Docker's Linux VM.
+
+## Verify
+
+- Explain the difference between an image and a container.
+- Identify which component actually creates containers: the CLI or daemon.
+- Explain why a Linux container on macOS still uses a Linux kernel.
+
+Official references: [Docker overview](https://docs.docker.com/get-started/docker-overview/), [What is a container?](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/)
+
+Next: [Module 2 — Container Lifecycle & Inspection](#02)
+</script>
+
+<script type="text/markdown" id="md-02">
+## Concepts
+
+`docker run` combines image pull (when needed), container creation, and
+container start. A stopped container still exists until removed, including its
+writable layer and metadata. `docker ps` lists running containers;
+`docker ps -a` includes stopped ones.
+
+The main container process determines its lifecycle. When PID 1 exits, the
+container stops. Logs capture the process's standard output and error streams;
+`exec` starts an additional process inside an already-running container.
+
+## Hands-on
+
+1. Start an Nginx container in the background:
+
+   ```bash
+   docker run -d --name lifecycle-web -p 127.0.0.1:8080:80 nginx:1.28-alpine
+   curl http://localhost:8080/
+   ```
+
+   Binding to `127.0.0.1` keeps the published port reachable only from this
+   host. `-d` detaches the terminal.
+
+2. Inspect it from several angles:
+
+   ```bash
+   docker ps
+   docker logs lifecycle-web
+   docker inspect lifecycle-web
+   docker exec lifecycle-web cat /etc/nginx/conf.d/default.conf
+   ```
+
+3. Stop and restart the same container:
+
+   ```bash
+   docker stop lifecycle-web
+   docker ps -a --filter name=lifecycle-web
+   docker start lifecycle-web
+   curl http://localhost:8080/
+   ```
+
+4. Remove it. A running container must first be stopped or explicitly forced:
+
+   ```bash
+   docker stop lifecycle-web
+   docker rm lifecycle-web
+   docker ps -a --filter name=lifecycle-web
+   ```
+
+5. Observe an exit code:
+
+   ```bash
+   docker run --name exit-demo alpine:3.22 sh -c 'echo about-to-exit; exit 7'
+   docker inspect exit-demo --format '{{.State.ExitCode}}'
+   docker rm exit-demo
+   ```
+
+## Verify
+
+- Explain why `docker stop` does not delete a container.
+- Describe the difference between `docker exec` and `docker run`.
+- Predict what happens when the container's main process exits.
+
+Official reference: [Run containers](https://docs.docker.com/engine/containers/run/)
+
+Next: [Module 3 — Build Your First Image](#03)
+</script>
+
+<script type="text/markdown" id="md-03">
+## Concepts
+
+A `Dockerfile` is an ordered recipe for creating an image. `FROM` selects a
+base, `WORKDIR` sets the default directory, `COPY` adds files, `RUN` executes
+during the build, and `CMD` supplies the default process at runtime. `EXPOSE`
+documents a container port; it does not publish that port to the host.
+
+The final `.` in `docker build ... .` is the **build context**. Only files in
+that context can be copied. `.dockerignore` excludes files that should not be
+sent to the builder, improving performance and reducing the risk of including
+secrets.
+
+## Hands-on
+
+All commands run from the shared application directory:
+
+```bash
+cd docker/apps/visit-counter
+```
+
+1. Copy `Dockerfile.starter` to `Dockerfile`, then replace every `# TODO`.
+   Compare your result with `../../03-build-first-image/solution/Dockerfile`
+   only after attempting it yourself.
+
+2. Build and tag the image:
+
+   ```bash
+   docker build -t visit-counter:v1 .
+   docker image ls visit-counter
+   ```
+
+3. Run it and publish its port:
+
+   ```bash
+   docker run -d --name visit-counter \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl http://localhost:5050/
+   curl http://localhost:5050/config
+   ```
+
+   Port `5050` avoids the common macOS AirPlay conflict on host port `5000`.
+   The app still listens on port `5000` inside the container.
+
+4. Inspect image metadata and clean up the container:
+
+   ```bash
+   docker image inspect visit-counter:v1
+   docker stop visit-counter
+   docker rm visit-counter
+   ```
+
+## Verify
+
+- Explain why `EXPOSE 5000` did not make the app reachable by itself.
+- Identify which files `.dockerignore` prevents from entering the context.
+- Distinguish a build-time `RUN` instruction from runtime `CMD`.
+
+Official references: [Dockerfile overview](https://docs.docker.com/build/concepts/dockerfile/), [Build context](https://docs.docker.com/build/concepts/context/)
+
+Next: [Module 4 — Layers, Cache & Image History](#04)
+</script>
+
+<script type="text/markdown" id="md-04">
+## Concepts
+
+Images are composed of content-addressed layers. During a rebuild, Docker can
+reuse cached results until an instruction or one of its inputs changes. Once a
+layer changes, later dependent layers must be rebuilt. Put stable dependency
+files before frequently changed application source so ordinary code edits do
+not reinstall every dependency.
+
+Tags such as `visit-counter:v1` are mutable names pointing at image content;
+they are not immutable copies. Rebuilding with the same tag moves that tag to
+the new result.
+
+## Hands-on
+
+Run these commands from `docker/apps/visit-counter`.
+
+1. Build with plain progress so cache decisions are visible:
+
+   ```bash
+   docker build --progress=plain -t visit-counter:cache-demo .
+   docker build --progress=plain -t visit-counter:cache-demo .
+   ```
+
+   The second build should reuse every eligible step.
+
+2. Change only the default message in `app.py`, rebuild, and observe that the
+   dependency installation remains cached:
+
+   ```bash
+   docker build --progress=plain -t visit-counter:cache-demo .
+   ```
+
+3. Inspect the resulting history:
+
+   ```bash
+   docker image history visit-counter:cache-demo
+   docker image inspect visit-counter:cache-demo --format '{{.Id}}'
+   ```
+
+4. Temporarily move `COPY app.py .` before dependency installation and rebuild.
+   An app-only edit now invalidates more work. Restore the Dockerfile to the
+   ordering in `../../04-layers-cache/solution/Dockerfile` afterward.
+
+5. Force a clean build only to compare behavior:
+
+   ```bash
+   docker build --no-cache --progress=plain -t visit-counter:no-cache .
+   ```
+
+   `--no-cache` skips reusable build cache, but it does not automatically fetch
+   a newer base image; `--pull` is the separate option for that.
+
+## Verify
+
+- Explain which input invalidates the `COPY requirements.txt` layer.
+- Explain why instruction ordering changes rebuild time.
+- Explain why a tag alone does not guarantee identical image content.
+
+Official references: [Build cache](https://docs.docker.com/build/cache/), [Cache optimization](https://docs.docker.com/build/cache/optimize/)
+
+Next: [Module 5 — Runtime Configuration, Processes & Ports](#05)
+</script>
+
+<script type="text/markdown" id="md-05">
+## Concepts
+
+An image supplies defaults; each container adds runtime configuration.
+Environment variables, mounts, published ports, and command overrides let one
+image run in different environments. Do not bake credentials into images or
+commit them in environment files.
+
+The image's `CMD` starts `python app.py` as PID 1. PID 1 receives container
+stop signals and its exit ends the container. Exec-form JSON commands avoid an
+extra shell and generally forward signals more predictably than shell-form
+commands.
+
+## Hands-on
+
+Run from the repository root after building `visit-counter:v1`.
+
+1. Override the message and bind only to localhost:
+
+   ```bash
+   docker run -d --name configured-counter \
+     -p 127.0.0.1:5050:5000 \
+     -e MESSAGE='Configured at runtime' \
+     visit-counter:v1
+   curl http://localhost:5050/
+   ```
+
+2. Inspect the process and configuration:
+
+   ```bash
+   docker top configured-counter
+   docker exec configured-counter sh -c "tr '\0' ' ' </proc/1/cmdline"
+   docker inspect configured-counter --format '{{json .Config.Env}}'
+   ```
+
+   Inspection can reveal environment values; this is one reason environment
+   variables are not a complete secret-management solution.
+
+3. Use an environment file:
+
+   ```bash
+   docker rm -f configured-counter
+   docker run -d --name configured-counter \
+     --env-file docker/05-runtime-configuration/solution/runtime.env \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl http://localhost:5050/config
+   ```
+
+4. Contrast metadata with publication:
+
+   ```bash
+   docker inspect visit-counter:v1 --format '{{json .Config.ExposedPorts}}'
+   docker port configured-counter
+   ```
+
+5. Stop the container and observe graceful termination:
+
+   ```bash
+   docker stop configured-counter
+   docker rm configured-counter
+   ```
+
+## Verify
+
+- Distinguish the host port from the container port in `5050:5000`.
+- Explain why `EXPOSE` and `-p` serve different purposes.
+- Explain why secrets should not be passed in committed environment files.
+
+Official references: [Publishing ports](https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/), [Dockerfile `CMD`](https://docs.docker.com/reference/dockerfile/#cmd)
+
+Next: [Module 6 — Persistent Data & Mounts](#06)
+</script>
+
+<script type="text/markdown" id="md-06">
+## Concepts
+
+Files written only to a container's writable layer disappear when that
+container is removed. A **volume** is persistent storage managed by Docker. A
+**bind mount** maps a specific host path into a container and is useful for
+source or configuration files, but couples the container to the host layout.
+
+Prefer the explicit `--mount` syntax in learning material. Bind mounts are
+writable by default, so use `readonly` when the container only needs to read.
+
+## Hands-on
+
+1. Demonstrate ephemeral container data:
+
+   ```bash
+   docker run -d --name visit-counter \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl -X POST http://localhost:5050/count
+   curl http://localhost:5050/count
+   docker rm -f visit-counter
+   docker run -d --name visit-counter \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl http://localhost:5050/count
+   ```
+
+   The recreated container starts at zero.
+
+2. Recreate it with a named volume:
+
+   ```bash
+   docker rm -f visit-counter
+   docker volume create visit-data
+   docker run -d --name visit-counter \
+     --mount type=volume,src=visit-data,dst=/data \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl -X POST http://localhost:5050/count
+   docker rm -f visit-counter
+   docker run -d --name visit-counter \
+     --mount type=volume,src=visit-data,dst=/data \
+     -p 127.0.0.1:5050:5000 visit-counter:v1
+   curl http://localhost:5050/count
+   ```
+
+3. Inspect the managed volume:
+
+   ```bash
+   docker volume inspect visit-data
+   ```
+
+4. Bind-mount the example configuration read-only:
+
+   ```bash
+   docker run --rm \
+     --mount type=bind,src="$PWD/docker/apps/visit-counter/.env.example",dst=/config/app.env,readonly \
+     alpine:3.22 cat /config/app.env
+   ```
+
+5. Clean up only this lab's resources:
+
+   ```bash
+   docker rm -f visit-counter
+   docker volume rm visit-data
+   ```
+
+## Verify
+
+- Choose a named volume for database data and a bind mount for editable source.
+- Explain why read-only bind mounts reduce risk.
+- Explain why removing a container does not automatically remove its volume.
+
+Official references: [Docker storage](https://docs.docker.com/engine/storage/), [Bind mounts](https://docs.docker.com/engine/storage/bind-mounts/)
+
+Next: [Module 7 — Container Networking](#07)
+</script>
+
+<script type="text/markdown" id="md-07">
+## Concepts
+
+Containers have isolated network namespaces. Publishing a port makes a
+container service reachable from the host; it is not required for containers
+to communicate with each other. A user-defined bridge network provides
+isolation plus automatic DNS resolution by container name. Prefer names over
+container IP addresses because addresses can change when containers are
+recreated.
+
+The visit counter can use Redis when `REDIS_HOST` is set. Redis does not need a
+host-published port because only the web container needs to reach it.
+
+## Hands-on
+
+1. Create a network and start Redis:
+
+   ```bash
+   docker network create visit-net
+   docker run -d --name cache --network visit-net redis:8-alpine
+   ```
+
+2. Start the web app on the same network:
+
+   ```bash
+   docker run -d --name visit-counter \
+     --network visit-net \
+     -p 127.0.0.1:5050:5000 \
+     -e REDIS_HOST=cache \
+     visit-counter:v1
+   ```
+
+3. Exercise the Redis-backed counter:
+
+   ```bash
+   curl http://localhost:5050/
+   curl -X POST http://localhost:5050/count
+   curl http://localhost:5050/count
+   ```
+
+   The response should report `redis` as its backend.
+
+4. Inspect network membership and name resolution:
+
+   ```bash
+   docker network inspect visit-net
+   docker exec visit-counter python -c \
+     'import socket; print(socket.gethostbyname("cache"))'
+   ```
+
+5. Prove the default bridge does not provide access to this isolated network:
+
+   ```bash
+   docker run --rm alpine:3.22 nslookup cache
+   ```
+
+   This lookup should fail because that container did not join `visit-net`.
+
+6. Clean up in dependency order:
+
+   ```bash
+   docker rm -f visit-counter cache
+   docker network rm visit-net
+   ```
+
+## Verify
+
+- Explain why Redis did not need `-p 6379:6379`.
+- Explain why `cache` is safer to depend on than a container IP address.
+- Distinguish network isolation from host port publication.
+
+Official reference: [Bridge network driver](https://docs.docker.com/engine/network/drivers/bridge/)
+
+Next: [Module 8 — Compose Fundamentals](#08)
+</script>
+
+<script type="text/markdown" id="md-08">
+## Concepts
+
+Docker Compose describes a multi-container application in YAML. The preferred
+filename is `compose.yaml`, and the current CLI form is `docker compose`.
+Services define containers; top-level volumes and networks define shared
+resources. Compose creates a project-scoped default network, and each service
+is discoverable by its service name.
+
+A Dockerfile defines how to build an image. A Compose file defines how one or
+more containers run. These files complement rather than replace each other.
+
+## Hands-on
+
+Run from `docker/08-compose-fundamentals`.
+
+1. Complete `compose-starter.yaml`: mount `redis-data` at `/data` in the cache
+   service and declare the volume at the top level.
+
+2. Render the fully resolved model before starting anything:
+
+   ```bash
+   docker compose -f compose-starter.yaml config
+   ```
+
+   Compare with `solution/compose.yaml` if validation fails.
+
+3. Build and start the project:
+
+   ```bash
+   docker compose -f compose-starter.yaml up -d --build
+   docker compose -f compose-starter.yaml ps
+   docker compose -f compose-starter.yaml logs
+   ```
+
+4. Exercise the application and inspect Compose-created resources:
+
+   ```bash
+   curl -X POST http://localhost:5050/count
+   docker compose -f compose-starter.yaml exec web python -c \
+     'import socket; print(socket.gethostbyname("cache"))'
+   docker network ls
+   docker volume ls
+   ```
+
+5. Recreate the services and confirm the named volume keeps the count:
+
+   ```bash
+   docker compose -f compose-starter.yaml down
+   docker compose -f compose-starter.yaml up -d
+   curl http://localhost:5050/count
+   ```
+
+6. Remove services and the project volume:
+
+   ```bash
+   docker compose -f compose-starter.yaml down --volumes
+   ```
+
+   Omitting `--volumes` deliberately preserves named volumes.
+
+## Verify
+
+- Identify the service name used as Redis's DNS name.
+- Explain what `docker compose config` checks and expands.
+- Explain the difference between `down` and `down --volumes`.
+
+Official references: [How Compose works](https://docs.docker.com/compose/intro/compose-application-model/), [Compose CLI](https://docs.docker.com/compose/reference/)
+
+Next: [Module 9 — Reliable Compose Applications](#09)
+</script>
+
+<script type="text/markdown" id="md-09">
+## Concepts
+
+Starting a dependency before an application does not mean the dependency is
+ready to accept connections. A health check gives Docker an application-level
+signal. Long-form `depends_on` with `condition: service_healthy` makes Compose
+wait for that signal before creating the dependent service.
+
+A health check reports health; it does not restart an unhealthy container.
+Restart policies respond when a container exits or the daemon restarts, with
+different behavior for manual stops. Application retries are still important
+because dependencies can fail after startup.
+
+## Hands-on
+
+Run from `docker/09-reliable-compose`.
+
+1. Complete the TODOs in `compose-starter.yaml` so Redis runs
+   `redis-cli ping` and the web service waits for `service_healthy`.
+
+2. Validate and start it:
+
+   ```bash
+   docker compose -f compose-starter.yaml config --quiet
+   docker compose -f compose-starter.yaml up -d --build
+   docker compose -f compose-starter.yaml ps
+   ```
+
+   Redis should become `healthy` before the web service starts.
+
+3. Inspect the raw health state:
+
+   ```bash
+   docker inspect $(docker compose -f compose-starter.yaml ps -q cache) \
+     --format '{{json .State.Health}}'
+   curl http://localhost:5050/healthz
+   ```
+
+4. Stop Redis and observe dependency failure after startup:
+
+   ```bash
+   docker compose -f compose-starter.yaml stop cache
+   curl -i http://localhost:5050/healthz
+   docker compose -f compose-starter.yaml start cache
+   ```
+
+   `depends_on` controls startup ordering; it does not continuously repair the
+   web service's dependency.
+
+5. Inspect the restart policy and clean up:
+
+   ```bash
+   docker inspect $(docker compose -f compose-starter.yaml ps -q web) \
+     --format '{{.HostConfig.RestartPolicy.Name}}'
+   docker compose -f compose-starter.yaml down --volumes
+   ```
+
+## Verify
+
+- Distinguish “running” from “healthy.”
+- Explain what `service_healthy` guarantees and what it does not.
+- Explain why health checks and application retry logic are complementary.
+
+Official references: [Compose startup order](https://docs.docker.com/compose/how-tos/startup-order/), [Restart policies](https://docs.docker.com/engine/containers/start-containers-automatically/)
+
+Next: [Module 10 — Efficient & Safer Images](#10)
+</script>
+
+<script type="text/markdown" id="md-10">
+## Concepts
+
+Multi-stage builds separate build tools from the final runtime image. The
+visit-counter build stage creates Python wheels; the runtime stage installs
+only those artifacts. This separation makes the final image easier to reason
+about, even when size savings are modest for an interpreted application.
+
+Run application processes as a non-root user unless they genuinely need root.
+Keep the build context small, avoid unnecessary packages, rebuild regularly,
+and understand that tags are mutable. Pinning a base image digest maximizes
+reproducibility, but creates an explicit update responsibility.
+
+## Hands-on
+
+Run from `docker/apps/visit-counter`.
+
+1. Complete `Dockerfile.optimized-starter`, including ownership of `/data`, using
+   `Dockerfile.optimized` only as the reference solution.
+
+2. Ask the builder to check the Dockerfile, then build it:
+
+   ```bash
+   docker build --check -f Dockerfile.optimized-starter .
+   docker build -f Dockerfile.optimized-starter -t visit-counter:optimized .
+   ```
+
+3. Compare image metadata and history:
+
+   ```bash
+   docker image ls visit-counter
+   docker image history visit-counter:optimized
+   docker inspect visit-counter:optimized --format '{{.Config.User}}'
+   ```
+
+4. Run the image and prove the process is unprivileged:
+
+   ```bash
+   docker run -d --name optimized-counter \
+     -p 127.0.0.1:5050:5000 visit-counter:optimized
+   docker exec optimized-counter id
+   curl http://localhost:5050/healthz
+   ```
+
+   The UID should be `10001`, not `0`. Confirm that the unprivileged process
+   can still use its intended data path:
+
+   ```bash
+   curl -X POST http://localhost:5050/count
+   ```
+
+5. Inspect the exact base image reference used by the Dockerfile. A version tag
+   such as `python:3.12-slim` can move to newer patched content; a digest-pinned
+   reference cannot move until deliberately updated.
+
+6. Clean up:
+
+   ```bash
+   docker rm -f optimized-counter
+   ```
+
+## Verify
+
+- Explain what is copied between the build and runtime stages.
+- Explain why a non-root user limits the impact of an application compromise.
+- Describe the maintenance tradeoff introduced by digest pinning.
+
+Official reference: [Building best practices](https://docs.docker.com/build/building/best-practices/)
+
+Next: [Module 11 — Resources & Troubleshooting](#11)
+</script>
+
+<script type="text/markdown" id="md-11">
+## Concepts
+
+Containers have no CPU or memory limits by default. Limits protect the host and
+make resource assumptions visible, but values must be tested against the real
+application. `docker stats` shows live usage; `docker inspect` shows configured
+limits and state.
+
+Use a consistent debugging loop: inspect project status, read logs, inspect the
+resolved Compose model, inspect container state and networks, then test from
+the narrowest relevant boundary. Avoid deleting resources before collecting
+evidence.
+
+## Hands-on
+
+`broken-compose.yaml` contains two faults. Diagnose them in order without
+looking at `solution/compose.yaml`.
+
+1. Validate and start the stack:
+
+   ```bash
+   cd docker/11-resources-troubleshooting
+   docker compose -f broken-compose.yaml config --quiet
+   docker compose -f broken-compose.yaml up -d --build
+   docker compose -f broken-compose.yaml ps
+   ```
+
+2. The host request fails. Gather evidence:
+
+   ```bash
+   curl -i http://localhost:5050/
+   docker compose -f broken-compose.yaml logs web
+   docker compose -f broken-compose.yaml port web 5000
+   ```
+
+   Fix the published container port: the app listens on `5000`, not `5001`.
+
+3. The root endpoint now works, but the counter returns `503`:
+
+   ```bash
+   curl -i http://localhost:5050/count
+   docker compose -f broken-compose.yaml exec web python -c \
+     'import socket; print(socket.gethostbyname("missing-cache"))'
+   ```
+
+   Fix `REDIS_HOST` to the actual Compose service name, `cache`.
+
+4. Add and inspect resource controls:
+
+   ```yaml
+   mem_limit: 128m
+   cpus: 0.50
+   ```
+
+   ```bash
+   docker compose -f broken-compose.yaml up -d
+   docker stats --no-stream
+   docker inspect $(docker compose -f broken-compose.yaml ps -q web) \
+     --format 'memory={{.HostConfig.Memory}} nano_cpus={{.HostConfig.NanoCpus}}'
+   ```
+
+5. Compare with the solution, then clean up:
+
+   ```bash
+   docker compose -f broken-compose.yaml down
+   ```
+
+## Verify
+
+- Explain why a valid Compose file can still describe a broken application.
+- Identify which evidence exposed each fault.
+- Explain why arbitrary low memory limits are unsafe defaults.
+
+Official references: [Resource constraints](https://docs.docker.com/engine/containers/resource_constraints/), [Compose troubleshooting](https://docs.docker.com/compose/troubleshooting/)
+
+Next: [Module 12 — Capstone, Distribution & Cleanup](#12)
+</script>
+
+<script type="text/markdown" id="md-12">
+## Concepts
+
+An image name can include a registry host, namespace, repository, tag, or
+immutable digest. Registries store and distribute images; containers are
+created from pulled image content. Pushing to Docker Hub requires an account
+and repository, so that exercise is optional.
+
+`docker image save` and `docker image load` transfer image archives without a
+registry. Cleanup should target known course resources. Broad commands such as
+`docker system prune` can delete unrelated caches and stopped resources and are
+intentionally not part of this course.
+
+## Hands-on
+
+1. From `docker/12-capstone-distribution`, review `compose-starter.yaml`. Fill
+   in anything you removed while experimenting, then compare it with
+   `solution/compose.yaml`.
+
+2. Validate and launch the complete stack:
+
+   ```bash
+   docker compose -f solution/compose.yaml config --quiet
+   docker compose -f solution/compose.yaml up -d --build --wait
+   docker compose -f solution/compose.yaml ps
+   curl http://localhost:5050/
+   curl -X POST http://localhost:5050/count
+   curl http://localhost:5050/healthz
+   ```
+
+3. Confirm the final image runs as the unprivileged user and Redis data
+   survives service recreation:
+
+   ```bash
+   docker compose -f solution/compose.yaml exec web id
+   docker compose -f solution/compose.yaml up -d --force-recreate --wait
+   curl http://localhost:5050/count
+   ```
+
+4. Save and reload the image locally:
+
+   ```bash
+   docker image save visit-counter:capstone -o /tmp/visit-counter-capstone.tar
+   docker image load -i /tmp/visit-counter-capstone.tar
+   ```
+
+5. **Optional Docker Hub exercise.** Replace `YOUR_DOCKER_ID`, sign in using
+   an access token when possible, then push and inspect the resulting digest:
+
+   ```bash
+   docker login
+   docker tag visit-counter:capstone YOUR_DOCKER_ID/visit-counter:v1
+   docker push YOUR_DOCKER_ID/visit-counter:v1
+   docker image inspect YOUR_DOCKER_ID/visit-counter:v1 \
+     --format '{{json .RepoDigests}}'
+   ```
+
+   Never commit registry credentials or tokens.
+
+6. Remove only course resources:
+
+   ```bash
+   docker compose -f solution/compose.yaml down --volumes
+   docker image rm visit-counter:capstone
+   ```
+
+## Verify
+
+- Explain the roles of a repository, tag, and digest.
+- Explain what survived container recreation and why.
+- Walk through `ps` → `logs` → `inspect` → network/config test from memory.
+
+Official references: [Build and push an image](https://docs.docker.com/get-started/introduction/build-and-push-first-image/), [Image save](https://docs.docker.com/reference/cli/docker/image/save/)
+
+You now have practical working knowledge of Docker's core objects, builds,
+runtime configuration, storage, networking, Compose, hardening, and debugging.
+</script>
+
+<script>
+(function () {
+var MODULES = [
+  { id: '00', eyebrow: 'START HERE', title: 'Course Overview', concept: '' },
+  { id: '01', eyebrow: 'MODULE 01', title: 'Containers & Docker Architecture', concept: 'Images, containers, client, daemon' },
+  { id: '02', eyebrow: 'MODULE 02', title: 'Container Lifecycle & Inspection', concept: 'Run, stop, logs, exec, inspect' },
+  { id: '03', eyebrow: 'MODULE 03', title: 'Build Your First Image', concept: 'Dockerfiles and build context' },
+  { id: '04', eyebrow: 'MODULE 04', title: 'Layers, Cache & Image History', concept: 'Cache invalidation and image history' },
+  { id: '05', eyebrow: 'MODULE 05', title: 'Runtime Configuration, Processes & Ports', concept: 'Environment, processes, ports' },
+  { id: '06', eyebrow: 'MODULE 06', title: 'Persistent Data & Mounts', concept: 'Volumes and bind mounts' },
+  { id: '07', eyebrow: 'MODULE 07', title: 'Container Networking', concept: 'Bridge networks and DNS' },
+  { id: '08', eyebrow: 'MODULE 08', title: 'Compose Fundamentals', concept: 'Multi-container application model' },
+  { id: '09', eyebrow: 'MODULE 09', title: 'Reliable Compose Applications', concept: 'Health checks and startup ordering' },
+  { id: '10', eyebrow: 'MODULE 10', title: 'Efficient & Safer Images', concept: 'Multi-stage builds and non-root users' },
+  { id: '11', eyebrow: 'MODULE 11', title: 'Resources & Troubleshooting', concept: 'Limits and debugging workflow' },
+  { id: '12', eyebrow: 'MODULE 12', title: 'Capstone, Distribution & Cleanup', concept: 'Complete stack, image transfer, registry' }
+];
+
+  var PROGRESS_KEY = 'docker-field-manual-progress';
+  var LAST_KEY = 'docker-field-manual-last';
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveProgress(list) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function saveLast(id) {
+    try { localStorage.setItem(LAST_KEY, id); } catch (e) {}
+  }
+
+  function loadLast() {
+    try { return localStorage.getItem(LAST_KEY); } catch (e) { return null; }
+  }
+
+  var completed = loadProgress();
+
+  function isDone(id) { return completed.indexOf(id) !== -1; }
+
+  function toggleDone(id) {
+    var i = completed.indexOf(id);
+    if (i === -1) { completed.push(id); } else { completed.splice(i, 1); }
+    saveProgress(completed);
+    renderSidebar();
+    updateProgress();
+  }
+
+  function updateProgress() {
+    var numbered = MODULES.filter(function (m) { return m.id !== '00'; });
+    var done = numbered.filter(function (m) { return isDone(m.id); }).length;
+    document.getElementById('progress-text').textContent = done + ' / ' + numbered.length + ' complete';
+    document.getElementById('progress-fill').style.width = (done / numbered.length * 100) + '%';
+  }
+
+  function checkIconSVG() {
+    return '<svg viewBox="0 0 16 16" width="10" height="10" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function renderSidebar() {
+    var nav = document.getElementById('module-nav');
+    nav.innerHTML = '';
+    MODULES.forEach(function (m) {
+      var row = document.createElement('div');
+      row.className = 'nav-item' + (m.id === currentId ? ' active' : '') + (m.id === '00' ? ' overview' : '');
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+
+      var num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = m.id === '00' ? '--' : m.id;
+      row.appendChild(num);
+
+      var label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = m.title;
+      row.appendChild(label);
+
+      if (m.id !== '00') {
+        var check = document.createElement('span');
+        check.className = 'check' + (isDone(m.id) ? ' done' : '');
+        check.innerHTML = isDone(m.id) ? checkIconSVG() : '';
+        check.title = isDone(m.id) ? 'Mark incomplete' : 'Mark complete';
+        check.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleDone(m.id);
+        });
+        row.appendChild(check);
+      }
+
+      row.addEventListener('click', function () { navigate(m.id); });
+      row.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(m.id); }
+      });
+
+      nav.appendChild(row);
+    });
+  }
+
+  var currentId = null;
+
+  function navigate(id) {
+    render(id);
+    closeMobileNav();
+  }
+
+  function wrapCodeBlocks(container) {
+    var blocks = container.querySelectorAll('pre > code');
+    blocks.forEach(function (codeEl) {
+      var pre = codeEl.parentElement;
+      if (pre.parentElement.classList.contains('code-block')) return;
+
+      try { hljs.highlightElement(codeEl); } catch (e) {}
+
+      var langMatch = (codeEl.className || '').match(/language-(\w+)/);
+      var lang = langMatch ? langMatch[1] : '';
+
+      var wrap = document.createElement('div');
+      wrap.className = 'code-block';
+
+      var toolbar = document.createElement('div');
+      toolbar.className = 'code-toolbar';
+
+      var langLabel = document.createElement('span');
+      langLabel.className = 'code-lang';
+      langLabel.textContent = lang || 'code';
+      toolbar.appendChild(langLabel);
+
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.type = 'button';
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', function () {
+        var text = codeEl.textContent;
+        try {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.textContent = 'Copied';
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+          }, function () {
+            copyBtn.textContent = 'Failed';
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+          });
+        } catch (e) {
+          copyBtn.textContent = 'Failed';
+          setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+        }
+      });
+      toolbar.appendChild(copyBtn);
+
+      pre.parentElement.insertBefore(wrap, pre);
+      wrap.appendChild(toolbar);
+      wrap.appendChild(pre);
+    });
+  }
+
+  function wrapTables(container) {
+    var tables = container.querySelectorAll('table');
+    tables.forEach(function (t) {
+      var wrap = document.createElement('div');
+      wrap.className = 'content-table-wrap';
+      t.parentElement.insertBefore(wrap, t);
+      wrap.appendChild(t);
+    });
+  }
+
+  function pagerHTML(idx) {
+    var prev = idx > 0 ? MODULES[idx - 1] : null;
+    var next = idx < MODULES.length - 1 ? MODULES[idx + 1] : null;
+    var html = '<div class="pager">';
+    if (prev) {
+      html += '<a href="javascript:void(0)" class="prev" data-nav="' + prev.id + '"><span class="pager-dir">&larr; Previous</span><span class="pager-title">' + prev.title + '</span></a>';
+    } else {
+      html += '<span></span>';
+    }
+    if (next) {
+      html += '<a href="javascript:void(0)" class="next" data-nav="' + next.id + '"><span class="pager-dir">Next &rarr;</span><span class="pager-title">' + next.title + '</span></a>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function render(id) {
+    var idx = MODULES.findIndex(function (m) { return m.id === id; });
+    if (idx === -1) { id = '00'; idx = 0; }
+    currentId = id;
+    saveLast(id);
+
+    var m = MODULES[idx];
+    var mdEl = document.getElementById('md-' + id);
+    var mdText = mdEl ? mdEl.textContent : '';
+    var bodyHtml = marked.parse(mdText);
+
+    var content = document.getElementById('content');
+    var headHtml = '<div class="content-eyebrow">' + m.eyebrow + '</div>' +
+      '<h1 class="page-title">' + m.title + '</h1>' +
+      (m.concept ? '<p class="page-concept">' + m.concept + '</p>' : '');
+
+    var footerHtml = '<div class="content-footer">';
+    if (id !== '00') {
+      footerHtml += '<button class="complete-toggle' + (isDone(id) ? ' done' : '') + '" id="complete-btn">' +
+        '<span class="check">' + (isDone(id) ? checkIconSVG() : '') + '</span>' +
+        '<span>' + (isDone(id) ? 'Module complete' : 'Mark module complete') + '</span>' +
+        '</button>';
+    }
+    footerHtml += pagerHTML(idx) + '</div>';
+
+    content.innerHTML = headHtml + bodyHtml + footerHtml;
+
+    wrapCodeBlocks(content);
+    wrapTables(content);
+
+    content.querySelectorAll('a[data-nav]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        navigate(a.getAttribute('data-nav'));
+      });
+    });
+    content.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      var target = a.getAttribute('href').slice(1);
+      if (MODULES.some(function (m) { return m.id === target; })) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          navigate(target);
+        });
+      }
+    });
+
+    if (id !== '00') {
+      document.getElementById('complete-btn').addEventListener('click', function () {
+        toggleDone(id);
+        render(id);
+      });
+    }
+
+    renderSidebar();
+    updateProgress();
+    document.getElementById('content-wrap').scrollTop = 0;
+  }
+
+  function openMobileNav() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('backdrop').classList.add('open');
+  }
+  function closeMobileNav() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('backdrop').classList.remove('open');
+  }
+
+  document.getElementById('menu-toggle').addEventListener('click', openMobileNav);
+  document.getElementById('backdrop').addEventListener('click', closeMobileNav);
+
+  marked.setOptions({ gfm: true, breaks: false });
+
+  var startId = loadLast() || '00';
+  if (!MODULES.some(function (m) { return m.id === startId; })) startId = '00';
+  render(startId);
+})();
+</script>
+</body>
+</html>

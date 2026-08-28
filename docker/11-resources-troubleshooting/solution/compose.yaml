@@ -1,0 +1,13 @@
+services:
+  web:
+    build:
+      context: ../../apps/visit-counter
+    ports:
+      - "127.0.0.1:5050:5000"
+    environment:
+      REDIS_HOST: cache
+    mem_limit: 128m
+    cpus: 0.50
+
+  cache:
+    image: redis:8-alpine

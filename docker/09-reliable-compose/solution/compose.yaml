@@ -1,0 +1,26 @@
+services:
+  web:
+    build:
+      context: ../../apps/visit-counter
+    ports:
+      - "127.0.0.1:${APP_PORT:-5050}:5000"
+    environment:
+      REDIS_HOST: cache
+    depends_on:
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cache:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
