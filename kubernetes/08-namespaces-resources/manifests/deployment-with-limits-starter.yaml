@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  namespace: training
+  labels:
+    app: hello-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: 50m
+              # TODO: memory request — keep it equal to the limit below for this exercise
+              memory: ???
+            limits:
+              cpu: 100m
+              # TODO: set this deliberately low (e.g. "16Mi") — lower than a
+              # Python/Flask process actually needs — to see what happens
+              # when a container is starved of memory. You'll fix this once
+              # you've observed the failure.
+              memory: ???

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  labels:
+    app: hello-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              # TODO: which path reports health? (see app.py)
+              path: ???
+              port: 5000
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            # TODO: how many consecutive failures before this Pod is marked NotReady?
+            failureThreshold: ???
+          livenessProbe:
+            httpGet:
+              path: ???
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            # TODO: how many consecutive failures before the container is restarted?
+            failureThreshold: ???

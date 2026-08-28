@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app-pvc
+  labels:
+    app: hello-app-pvc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app-pvc
+  template:
+    metadata:
+      labels:
+        app: hello-app-pvc
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hello-app-data

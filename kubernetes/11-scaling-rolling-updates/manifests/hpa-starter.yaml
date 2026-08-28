@@ -1,0 +1,22 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hello-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hello-app
+  # TODO: minimum replicas to always keep running
+  minReplicas: ???
+  # TODO: ceiling on how far this can scale up
+  maxReplicas: ???
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # TODO: target average CPU utilization (%) across all replicas —
+          # above this, scale up; below it, scale down
+          averageUtilization: ???

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-app-emptydir
+  labels:
+    app: hello-app-emptydir
+spec:
+  containers:
+    - name: hello-app
+      image: hello-app:v1
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 5000
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      emptyDir: {}

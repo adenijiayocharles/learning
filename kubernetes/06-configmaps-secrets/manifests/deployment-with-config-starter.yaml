@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  labels:
+    app: hello-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "v1"
+            - name: MESSAGE
+              valueFrom:
+                # TODO: pull this env var's value from the hello-app-config
+                # ConfigMap's MESSAGE key, instead of a hardcoded value
+                configMapKeyRef:
+                  name: ???
+                  key: ???
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: secret-volume
+              mountPath: /etc/secret
+      volumes:
+        - name: config-volume
+          configMap:
+            # TODO: name of the ConfigMap to mount as files under /etc/config
+            name: ???
+        - name: secret-volume
+          secret:
+            # TODO: name of the Secret to mount as files under /etc/secret
+            secretName: ???

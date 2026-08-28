@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-app-config
+data:
+  MESSAGE: "Hello from a ConfigMap!"
+  GREETING_LANG: "en"

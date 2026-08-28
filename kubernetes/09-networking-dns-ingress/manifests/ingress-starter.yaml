@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    # TODO: the hostname this Ingress should respond to
+    - host: ???
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # TODO: name of the Service (from Module 5) to route traffic to
+                name: ???
+                port:
+                  # TODO: port that Service listens on
+                  number: ???

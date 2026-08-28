@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kubernetes Field Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --bg: #F4F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAEEF2;
+    --ink: #16202B;
+    --muted: #5B6B7A;
+    --accent: #D9642B;
+    --accent-ink: #FFFFFF;
+    --line: #D7DEE5;
+    --code-bg: #121A22;
+    --code-ink: #E7ECF1;
+    --code-line: #26323D;
+    --good: #2E7D53;
+    --shadow: 0 8px 24px rgba(22, 32, 43, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E141B;
+      --surface: #141C25;
+      --surface-2: #0B1117;
+      --ink: #E7ECF1;
+      --muted: #8CA0B3;
+      --accent: #FF8A50;
+      --accent-ink: #1A0E06;
+      --line: #26323D;
+      --code-bg: #0A0F14;
+      --code-ink: #DCE6EE;
+      --code-line: #223040;
+      --good: #5FBE8A;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E141B;
+    --surface: #141C25;
+    --surface-2: #0B1117;
+    --ink: #E7ECF1;
+    --muted: #8CA0B3;
+    --accent: #FF8A50;
+    --accent-ink: #1A0E06;
+    --line: #26323D;
+    --code-bg: #0A0F14;
+    --code-ink: #DCE6EE;
+    --code-line: #223040;
+    --good: #5FBE8A;
+    --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, .nav-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 0.88em;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+
+  .sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--surface-2);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    background-attachment: local;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.75rem 1.5rem 1.25rem;
+  }
+
+  .brand-mark { color: var(--accent); flex-shrink: 0; }
+
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  .brand-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .progress-block {
+    padding: 0 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-track {
+    height: 5px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  nav.module-nav {
+    padding: 0.75rem 0.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    border-left: 3px solid transparent;
+    color: var(--ink);
+    cursor: pointer;
+    background: transparent;
+    font-size: 0.88rem;
+  }
+
+  .nav-item:hover { background: var(--surface); }
+
+  .nav-item.active {
+    background: var(--surface);
+    border-left-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .nav-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    width: 1.4rem;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nav-item .label { flex: 1; min-width: 0; }
+
+  .nav-item .check {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    background: transparent;
+  }
+
+  .nav-item .check:hover { border-color: var(--good); }
+
+  .nav-item .check.done {
+    background: var(--good);
+    border-color: var(--good);
+    color: var(--surface);
+  }
+
+  .nav-item.overview .num { color: var(--muted); }
+
+  /* ---------- Mobile nav toggle ---------- */
+
+  .mobile-bar { display: none; }
+
+  /* ---------- Content ---------- */
+
+  .content-wrap {
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3.5rem clamp(1.5rem, 5vw, 3rem) 6rem;
+  }
+
+  .content-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .content h1.page-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+    text-wrap: balance;
+  }
+
+  .content .page-concept {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin: 0 0 2.5rem;
+  }
+
+  .content h2 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    margin: 2.75rem 0 1rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .content h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+  .content h3 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 2rem 0 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.85rem;
+  }
+
+  .content p { margin: 0 0 1.1rem; max-width: 68ch; }
+  .content ul, .content ol { margin: 0 0 1.1rem; padding-left: 1.4rem; max-width: 68ch; }
+  .content li { margin-bottom: 0.5rem; }
+  .content li > ul, .content li > ol { margin-top: 0.5rem; }
+  .content strong { font-weight: 700; }
+
+  .content :not(pre) > code {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 0.1em 0.35em;
+    color: var(--ink);
+  }
+
+  .content blockquote {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    color: var(--ink);
+  }
+  .content blockquote p:last-child { margin-bottom: 0; }
+  .content blockquote strong:first-child { color: var(--accent); }
+
+  .content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+  }
+  .content-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+  .content th, .content td {
+    text-align: left;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .content th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .content td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+
+  .content hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  /* code blocks */
+  .code-block {
+    margin: 0 0 1.5rem;
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    overflow: hidden;
+  }
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.85rem;
+    border-bottom: 1px solid var(--code-line);
+  }
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: #7C8FA1;
+    text-transform: uppercase;
+  }
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    background: transparent;
+    border: 1px solid var(--code-line);
+    color: #B9C6D2;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .content pre {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+  }
+  .content pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--code-ink);
+    background: none;
+    white-space: pre;
+  }
+
+  /* minimal hljs palette, tuned to the code surface */
+  .hljs-comment, .hljs-quote { color: #7C8FA1; font-style: italic; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link { color: #FF8A50; }
+  .hljs-string, .hljs-attr, .hljs-name, .hljs-number, .hljs-symbol, .hljs-bullet, .hljs-addition { color: #9BD98A; }
+  .hljs-built_in, .hljs-title, .hljs-variable, .hljs-template-variable, .hljs-type { color: #7FC8F8; }
+  .hljs-meta, .hljs-deletion { color: #E3A6E0; }
+  .hljs-emphasis { font-style: italic; }
+  .hljs-strong { font-weight: 700; }
+
+  /* footer nav */
+  .content-footer {
+    margin-top: 3.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+  .complete-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    margin-bottom: 1.75rem;
+  }
+  .complete-toggle .check {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+  }
+  .complete-toggle.done { border-color: var(--good); color: var(--good); }
+  .complete-toggle.done .check { background: var(--good); border-color: var(--good); color: var(--surface); }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .pager > a {
+    flex: 1;
+    display: block;
+    border: 1px solid var(--line);
+    padding: 1rem 1.1rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .pager > a:hover { border-color: var(--accent); }
+  .pager > a.next { text-align: right; margin-left: auto; }
+  .pager-dir {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .pager-title { font-family: 'Archivo', sans-serif; font-weight: 700; }
+
+  @media (max-width: 860px) {
+    .sidebar {
+      position: fixed;
+      z-index: 20;
+      left: 0; top: 0;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .mobile-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 0.85rem 1.25rem;
+    }
+    .mobile-bar button {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.4rem 0.65rem;
+      cursor: pointer;
+    }
+    .mobile-bar .mb-title { font-family: 'Archivo', sans-serif; font-weight: 700; }
+    .backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 15;
+    }
+    .backdrop.open { display: block; }
+    .content { padding-top: 2.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar, .progress-fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="backdrop" id="backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="14" cy="6" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="5" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="23" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M14 9 L5.5 18.2 M14 9 L22.5 18.2" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      <div>
+        <div class="brand-eyebrow">FIELD MANUAL</div>
+        <div class="brand-title">Kubernetes</div>
+      </div>
+    </div>
+    <div class="progress-block">
+      <div class="progress-label">
+        <span id="progress-text">0 / 12 complete</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <nav class="module-nav" id="module-nav"></nav>
+  </aside>
+
+  <div class="content-wrap" id="content-wrap">
+    <div class="mobile-bar">
+      <button id="menu-toggle" aria-label="Open module list">&#9776;</button>
+      <span class="mb-title">Kubernetes Field Manual</span>
+    </div>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<script type="text/markdown" id="md-00">
+A hands-on, 12-module course for learning Kubernetes from zero to solid working
+knowledge. Every module teaches one concept and has you apply it against a
+real local cluster — no slides, no toy examples that don't run.
+
+## Prerequisites
+
+Already installed and verified on this machine:
+
+- `docker` — container runtime
+- `minikube` — local Kubernetes cluster
+- `kubectl` — the Kubernetes CLI
+
+No `kind`, no cloud account, no registry — everything runs locally, and
+container images are built straight into minikube's own Docker daemon (see
+Module 2).
+
+## How each module works
+
+Every module folder contains:
+
+- **`README.md`** — a short concept explanation, then a numbered hands-on
+  procedure with exact commands and what you should observe.
+- **`manifests/`** (from Module 5 onward) — starter YAML files with `# TODO`
+  comments marking the fields you need to fill in. Modules 3–4 have you write
+  the YAML from scratch instead — that repetition is the point early on.
+- **`solution/`** — the completed reference manifest. Try the exercise first;
+  only diff against this if you're stuck or want to double-check yourself.
+
+Work through the modules in order — later ones assume you've built (and left
+running, or know how to rebuild) the resources from earlier ones.
+
+## Shared demo app
+
+All 12 modules use one app: `apps/hello-app` — a tiny Flask service with just
+enough surface area to demonstrate every concept in the course (env-based
+config, a togglable health check, a file-backed counter). You'll build its
+container image once in Module 1 and reuse it (and a `v2` variant in Module
+11) throughout.
+
+## Modules
+
+| # | Module | Concept |
+|---|--------|---------|
+| 1 | [Docker Fundamentals](#01) | Containers, images, Dockerfiles |
+| 2 | [K8s Architecture & First Cluster](#02) | Control plane/nodes, minikube, YAML basics |
+| 3 | [Pods](#03) | The smallest deployable unit |
+| 4 | [Deployments & ReplicaSets](#04) | Declarative, self-healing workloads |
+| 5 | [Services](#05) | Stable networking for a set of Pods |
+| 6 | [ConfigMaps & Secrets](#06) | Externalizing configuration |
+| 7 | [Volumes & Persistent Storage](#07) | Ephemeral vs. persistent data |
+| 8 | [Namespaces & Resource Management](#08) | Isolation, requests/limits |
+| 9 | [Networking II: DNS & Ingress](#09) | Cluster DNS, L7 routing |
+| 10 | [Health Checks: Probes](#10) | Liveness, readiness, startup |
+| 11 | [Scaling & Rolling Updates](#11) | HPA, zero-downtime deploys |
+| 12 | [Troubleshooting & Helm](#12) | Debugging loop, packaging with Helm |
+
+## Cleanup
+
+When you're done with the whole course:
+
+```bash
+minikube delete
+```
+
+This tears down the entire local cluster (VM/container, volumes, everything
+built during the course). Nothing here touches anything outside minikube.
+</script>
+
+<script type="text/markdown" id="md-01">
+Kubernetes orchestrates containers — it doesn't create them. Before touching
+Kubernetes, you need a working mental model of what a container actually is,
+and enough Docker literacy to build one.
+
+## Concepts
+
+- **VM vs. container**: a VM virtualizes hardware and runs a full guest OS
+  kernel; a container is just an isolated process on the *host's* kernel
+  (via Linux namespaces + cgroups). That's why containers start in
+  milliseconds and are far lighter than VMs.
+- **Image vs. container**: an *image* is a read-only, layered filesystem
+  snapshot plus metadata (entrypoint, exposed ports, env). A *container* is a
+  running instance of an image with a writable layer on top. One image, many
+  containers.
+- **Layers & caching**: each `Dockerfile` instruction (`FROM`, `COPY`, `RUN`,
+  ...) produces a cached layer. Docker reuses a layer unmodified if nothing
+  above it in the file changed *and* its inputs are identical — this is why
+  instruction **order** matters (see the exercise below).
+- **Dockerfile basics**: `FROM` (base image), `WORKDIR` (default directory
+  for subsequent instructions), `COPY` (host → image), `RUN` (executes at
+  *build* time), `EXPOSE` (documentation of the listening port — doesn't
+  actually publish it), `CMD` (the process that runs at *container start*
+  time).
+- **Port mapping**: a container's network is isolated from the host by
+  default; `docker run -p <host-port>:<container-port>` punches a hole
+  through to reach it.
+
+## Hands-on
+
+All commands below run from `apps/hello-app/`.
+
+```bash
+cd apps/hello-app
+```
+
+1. **Complete the Dockerfile.** Open `Dockerfile.starter` and fill in each
+   `# TODO`. You have everything you need from the Concepts section above
+   and `app.py` (which listens on port 5000). Save your work as `Dockerfile`:
+
+   ```bash
+   cp Dockerfile.starter Dockerfile
+   # edit Dockerfile to fill in the TODOs
+   ```
+
+2. **Build the image:**
+
+   ```bash
+   docker build -t hello-app:v1 .
+   ```
+
+   If you're stuck, compare against `Dockerfile.solution` — but try first.
+
+3. **Run it and hit it:**
+
+   ```bash
+   docker run -d -p 5050:5000 --name hello-app-test hello-app:v1
+   curl http://localhost:5050/
+   ```
+
+   You should get back JSON with a `hostname`, `app_version`, and `message`.
+
+   > **Why port 5050 and not 5000?** On macOS, port 5000 is usually already
+   > claimed by the built-in AirPlay Receiver (Control Center) — you can
+   > confirm this yourself with `lsof -nP -iTCP:5000 -sTCP:LISTEN`. If you
+   > map `-p 5000:5000` there, requests silently go to AirPlay instead of
+   > your container (you'll get a `403 Forbidden` with `Server: AirTunes`
+   > in the response headers — a real, easy-to-hit gotcha, not a hint at a
+   > bug in your Dockerfile). The container's own internal port stays
+   > `5000` throughout this course — it's only the host-facing side of any
+   > `-p` mapping or `kubectl port-forward` that needs to dodge 5000 on
+   > this machine, which is why every later module maps to a different
+   > host port.
+
+4. **Poke around the running container:**
+
+   ```bash
+   docker ps
+   docker logs hello-app-test
+   docker exec -it hello-app-test sh   # you're now inside the container
+   ```
+
+   Try `ps aux` — it'll fail with `executable file not found`. That's not a
+   mistake; `python:3.12-slim` is stripped down enough that it doesn't even
+   include basic process tools. Confirm your app is PID 1 a different way:
+
+   ```sh
+   cat /proc/1/cmdline | tr '\0' ' '; echo
+   exit
+   ```
+
+   You should see `python app.py` — proof that inside this container, your
+   app's process *is* PID 1, with essentially nothing else running
+   alongside it.
+
+5. **Clean up the container:**
+
+   ```bash
+   docker stop hello-app-test && docker rm hello-app-test
+   ```
+
+6. **See layer caching in action.** Edit `app.py` — change the default
+   `message` string. Rebuild:
+
+   ```bash
+   docker build -t hello-app:v1 .
+   ```
+
+   Watch the build output: the `pip install` step should show `CACHED`
+   (nothing about `requirements.txt` changed), while the `COPY app.py .`
+   step and everything after it re-runs. This is exactly why `requirements.txt`
+   is copied and installed *before* the rest of the app code — if you'd
+   copied everything in one `COPY . .` step instead, editing any file would
+   invalidate the pip-install cache too, and every rebuild would reinstall
+   all dependencies from scratch.
+
+## Verify you understand this before moving on
+
+- Could you explain to someone why `docker run hello-app:v1` on your laptop
+  and on a teammate's laptop behave identically, but two `python app.py`
+  invocations might not?
+- Why did editing `app.py` not require re-running `pip install`?
+</script>
+
+<script type="text/markdown" id="md-02">
+## Concepts
+
+**Why Kubernetes over plain `docker run`?** Docker alone runs containers on
+one machine and doesn't know or care if they die, need to scale, or need to
+talk to each other across hosts. Kubernetes adds a control system on top:
+you declare the state you *want* (e.g. "3 replicas of hello-app, always
+running"), and it continuously works to make reality match — restarting
+crashed containers, rescheduling them if a node dies, spreading them across
+machines, load-balancing traffic between them.
+
+**Cluster architecture**, at a glance:
+
+- **Control plane** (the "brain," runs on control-plane node(s)):
+  - `kube-apiserver` — the front door. Every `kubectl` command, and every
+    internal component, talks to the cluster *only* through this REST API.
+  - `etcd` — the cluster's database. Stores all state (what you asked for,
+    what's currently running).
+  - `kube-scheduler` — decides which node a new Pod should run on.
+  - `kube-controller-manager` — runs the reconciliation loops (e.g. "a
+    Deployment wants 3 replicas but only 2 exist — create one").
+- **Worker nodes** (where your containers actually run):
+  - `kubelet` — the agent on each node that talks to the API server and
+    makes sure the containers it's told to run are actually running.
+  - `kube-proxy` — programs networking rules so Services (Module 5) work.
+  - **Container runtime** — actually pulls images and runs containers
+    (containerd, in minikube's case).
+
+`kubectl` is just a client that sends requests to `kube-apiserver`. It has no
+special powers beyond what that API allows.
+
+**minikube** runs a whole single-node cluster (control plane + worker,
+combined) inside one Docker container (or VM) on your machine — perfect for
+learning, not for production.
+
+**A YAML primer**, since every manifest in this course is YAML:
+
+```yaml
+key: value          # a scalar field
+nested:
+  key: value         # indentation (spaces, not tabs) = nesting
+list:
+  - item1            # a "-" prefix marks a list item
+  - item2
+```
+
+That's genuinely most of it — Kubernetes manifests are just deeply nested
+maps and lists of the above.
+
+## Hands-on
+
+1. **Start your cluster:**
+
+   ```bash
+   minikube start
+   minikube status
+   ```
+
+2. **Talk to it with kubectl:**
+
+   ```bash
+   kubectl cluster-info
+   kubectl get nodes -o wide
+   ```
+
+   Notice there's only one node — it's playing both control-plane and
+   worker roles.
+
+3. **Enable metrics-server now** — you won't need it until Modules 8 and 11,
+   but it takes a minute to become ready, so turn it on early:
+
+   ```bash
+   minikube addons enable metrics-server
+   ```
+
+4. *(Optional)* Open the visual dashboard:
+
+   ```bash
+   minikube dashboard
+   ```
+
+5. **The most important gotcha in this whole course: local images.**
+   Minikube runs its own internal Docker daemon, completely separate from
+   the one you used in Module 1. If you `docker build` normally, minikube's
+   cluster will never see that image, and it'll try (and fail) to pull it
+   from a public registry. To avoid needing a registry entirely, point your
+   shell's `docker` CLI *at minikube's* daemon instead:
+
+   ```bash
+   eval $(minikube docker-env)
+   ```
+
+   This only affects your **current terminal session** — you'll need to
+   re-run it in every new shell you use for this course (or use
+   `minikube docker-env` output to check whether it's already set).
+
+6. **Rebuild the image inside minikube:**
+
+   ```bash
+   cd ../apps/hello-app
+   docker build -t hello-app:v1 .
+   docker images | grep hello-app
+   ```
+
+   That image now lives inside minikube's cluster, ready for Kubernetes to
+   run it — no push, no registry, no `imagePullPolicy` headaches as long as
+   you remember to rebuild here (with `docker-env` active) whenever you
+   change the app.
+
+## Verify before moving on
+
+- `kubectl get nodes` should show one `Ready` node.
+- `docker images` (with `minikube docker-env` active) should list
+  `hello-app:v1`.
+</script>
+
+<script type="text/markdown" id="md-03">
+## Concepts
+
+A **Pod** is the smallest deployable unit in Kubernetes — not a container. A
+Pod wraps one or more containers that share networking (same IP, same
+`localhost`) and storage. Almost always you'll run exactly one container per
+Pod (sidecars are the exception, not covered in this course).
+
+Key fields in a Pod spec:
+
+- `apiVersion: v1`, `kind: Pod` — every manifest starts by declaring which
+  API resource it is.
+- `metadata.name` / `metadata.labels` — labels are arbitrary key-value tags
+  used everywhere in Kubernetes to select groups of objects (you'll rely on
+  this heavily from Module 4 onward).
+- `spec.containers[].image` — which image to run.
+- `spec.containers[].imagePullPolicy: IfNotPresent` — tells the kubelet
+  "only pull from a registry if you don't already have this image locally."
+  Required here since `hello-app:v1` only exists inside minikube's Docker
+  daemon (Module 2), not in any registry.
+- `spec.containers[].ports[].containerPort` — documents which port the
+  container listens on (like `EXPOSE` in a Dockerfile — informational,
+  doesn't publish anything by itself).
+
+**Pods are ephemeral and not self-healing on their own.** If you delete one,
+nothing recreates it — that's the job of a *controller* like a Deployment,
+which is exactly why Module 4 exists.
+
+## Hands-on
+
+1. **Write `pod.yaml` from scratch** in this directory, using the fields
+   described above: name it `hello-app`, label it `app: hello-app`, run
+   `hello-app:v1` with `imagePullPolicy: IfNotPresent`, and expose
+   `containerPort: 5000`. (Compare against `solution/pod.yaml` once you've
+   given it a real attempt.)
+
+   Make sure `minikube docker-env` is active in this shell (Module 2, step
+   5) — otherwise the pod won't find the image.
+
+2. **Apply it:**
+
+   ```bash
+   kubectl apply -f pod.yaml
+   kubectl get pods -w
+   ```
+
+   Watch the `STATUS` go `Pending` → `ContainerCreating` → `Running`.
+   `Ctrl+C` to stop watching.
+
+3. **Inspect it:**
+
+   ```bash
+   kubectl describe pod hello-app
+   kubectl logs hello-app
+   kubectl exec -it hello-app -- sh
+   ```
+
+4. **Reach it from your machine:**
+
+   ```bash
+   kubectl port-forward pod/hello-app 5050:5000
+   ```
+
+   In another terminal:
+
+   ```bash
+   curl http://localhost:5050/
+   ```
+
+   (Host port `5050`, not `5000` — see the note in Module 1 about macOS's
+   AirPlay Receiver squatting on port 5000.)
+
+   `Ctrl+C` the port-forward when done.
+
+5. **Delete it and watch what (doesn't) happen:**
+
+   ```bash
+   kubectl delete pod hello-app
+   kubectl get pods
+   ```
+
+   No pod. Nothing recreated it. This is the gap Deployments fill.
+
+## Verify before moving on
+
+- You should be able to explain the difference between a Pod and a
+  container in one sentence.
+- You should understand *why* deleting the Pod didn't bring it back.
+</script>
+
+<script type="text/markdown" id="md-04">
+## Concepts
+
+A **Deployment** is a controller that manages Pods for you declaratively.
+You describe desired state ("3 replicas of this Pod template"), and the
+Deployment's control loop continuously reconciles reality to match.
+
+The ownership chain: **Deployment → ReplicaSet → Pods**.
+
+- You create a Deployment.
+- The Deployment creates a **ReplicaSet**, whose only job is "ensure exactly
+  N Pods matching this template exist."
+- The ReplicaSet creates the actual **Pods**.
+
+(Deployments delegate to ReplicaSets specifically so that rolling updates —
+Module 11 — can keep an old ReplicaSet around briefly while a new one spins
+up, enabling zero-downtime rollout and rollback.)
+
+The glue holding this chain together is `spec.selector.matchLabels`, which
+must match `spec.template.metadata.labels` — this is how the Deployment
+knows which Pods belong to it.
+
+## Hands-on
+
+1. **Write `deployment.yaml`** in this directory: a Deployment named
+   `hello-app`, `replicas: 3`, selector matching label `app: hello-app`, and
+   a Pod template using `hello-app:v1` (same container spec as Module 3, now
+   nested under `spec.template.spec`). Add one env var, `APP_VERSION: "v1"`
+   — you'll use this later to see version changes reflected in real time.
+
+   (Check `solution/deployment.yaml` once you've tried it yourself.)
+
+2. **Apply it and see the full chain:**
+
+   ```bash
+   kubectl apply -f deployment.yaml
+   kubectl get deployments,replicasets,pods --show-labels
+   ```
+
+   Notice the ReplicaSet's name is `hello-app-<hash>` and each Pod's name is
+   `hello-app-<hash>-<random>` — each level's name embeds its parent's.
+
+3. **Kill self-healing in action.** Pick one Pod name from the list above
+   and delete it:
+
+   ```bash
+   kubectl delete pod <pod-name>
+   kubectl get pods -w
+   ```
+
+   Unlike Module 3, a replacement Pod appears within seconds — the
+   ReplicaSet controller noticed "2 exist, 3 are wanted" and fixed it.
+
+4. **Scale imperatively:**
+
+   ```bash
+   kubectl scale deployment hello-app --replicas=5
+   kubectl get pods
+   ```
+
+5. **Edit live** and watch reconciliation happen in real time:
+
+   ```bash
+   kubectl edit deployment hello-app
+   ```
+
+   Change `replicas: 5` back to `replicas: 3`, save and exit (this opens
+   your `$EDITOR` — usually `vi`; save with `:wq`). Watch
+   `kubectl get pods -w` in another terminal terminate the extra two.
+
+## Verify before moving on
+
+- Run `kubectl describe replicaset <name>` — find the line showing which
+  Deployment "owns" it.
+- Explain why the Deployment creates a ReplicaSet instead of managing Pods
+  directly (hint: think ahead to what a rolling update needs to keep around
+  temporarily).
+</script>
+
+<script type="text/markdown" id="md-05">
+## Concepts
+
+Pods are disposable — they get new IPs every time they're recreated (you saw
+this in Module 4). You can't hardcode a Pod IP anywhere. A **Service** gives
+a *stable* network identity to a *set* of Pods, selected by label — exactly
+the same label-matching mechanism a Deployment uses.
+
+Two Service types you'll use constantly:
+
+- **ClusterIP** (the default) — a stable virtual IP reachable only from
+  *inside* the cluster. This is how Pods talk to each other.
+- **NodePort** — everything ClusterIP does, plus it opens a port
+  (30000-32767 by default) on every node, reachable from outside the
+  cluster. Useful for local dev; production clusters usually prefer
+  Ingress (Module 9) or a cloud LoadBalancer instead.
+
+Under the hood, `kube-proxy` (Module 2) programs networking rules on every
+node so traffic to a Service's IP gets load-balanced across all matching
+Pods.
+
+Every Service also gets a **DNS name**, automatically, in the form
+`<service-name>.<namespace>.svc.cluster.local` — cluster DNS (CoreDNS)
+resolves it to the Service's ClusterIP. From within the same namespace you
+can just use `<service-name>`.
+
+## Hands-on
+
+Make sure the Module 4 Deployment is still running (`kubectl get deployment
+hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
+
+1. **Fill in and apply the ClusterIP Service:**
+
+   ```bash
+   # fill in the TODOs in manifests/service-clusterip-starter.yaml first
+   kubectl apply -f manifests/service-clusterip-starter.yaml
+   kubectl get svc hello-app
+   ```
+
+2. **Prove load-balancing and DNS work**, from inside the cluster. Launch a
+   throwaway Pod with a shell:
+
+   ```bash
+   kubectl run tmp-curl --rm -it --image=curlimages/curl --restart=Never -- sh
+   ```
+
+   From inside that shell:
+
+   ```sh
+   for i in 1 2 3 4 5; do curl -s http://hello-app.default.svc.cluster.local/; echo; done
+   ```
+
+   Look at the `hostname` field in each response — it should rotate across
+   your 3 replicas' Pod names, proving the Service is spreading traffic.
+   Also try the short name (works because you're in the same namespace):
+
+   ```sh
+   curl -s http://hello-app/
+   ```
+
+   `exit` when done — `--rm` cleans the Pod up automatically.
+
+3. **Fill in and apply the NodePort Service:**
+
+   ```bash
+   kubectl apply -f manifests/service-nodeport-starter.yaml
+   kubectl get svc hello-app-nodeport
+   ```
+
+4. **Reach it from your host machine.** Don't try to curl the node IP
+   directly — depending on your Docker backend, minikube's internal node IP
+   may not be routable from your Mac. Instead, let minikube handle it:
+
+   ```bash
+   minikube service hello-app-nodeport --url
+   ```
+
+   Copy the URL it prints and `curl` it.
+
+## Verify before moving on
+
+- Delete and recreate one of the backing Pods (`kubectl delete pod
+  <one-of-the-hello-app-pods>`) — the Service should keep working
+  immediately with zero reconfiguration on your part. Confirm with
+  `kubectl get endpoints hello-app` before and after.
+- Explain, in one sentence, why `minikube service --url` is used instead of
+  `curl $(minikube ip):<nodePort>` directly.
+</script>
+
+<script type="text/markdown" id="md-06">
+## Concepts
+
+Baking configuration into an image is a bad idea — you'd need a new image
+for every environment. **ConfigMaps** and **Secrets** externalize config so
+the same image works everywhere.
+
+- **ConfigMap** — arbitrary key-value config data.
+- **Secret** — structurally almost identical to a ConfigMap, but intended
+  for sensitive data. **Important caveat: Secret values are only
+  base64-encoded, not encrypted.** Anyone with API access to read the
+  Secret can trivially decode it. Real secret management (encryption at
+  rest, access control, rotation) needs more than a vanilla Secret object —
+  out of scope for this course, but know the limitation exists.
+
+Both can be consumed by a Pod two ways:
+
+1. **As an environment variable** (`valueFrom.configMapKeyRef` /
+   `secretKeyRef`) — injected once, at container **start** time.
+2. **As a mounted volume** — each key becomes a *file* under the mount path,
+   and (unlike env vars) the kubelet periodically syncs the mounted files
+   when the underlying ConfigMap/Secret changes.
+
+That difference in update behavior is the single most important gotcha in
+this module, and you'll reproduce it below.
+
+One more detail: when a Secret is mounted as a file, the kubelet
+automatically base64-*decodes* it for you — the file contains the raw
+value, not the base64 text.
+
+## Hands-on
+
+1. **Fill in and apply the ConfigMap and Secret:**
+
+   ```bash
+   # fill in manifests/configmap-starter.yaml and manifests/secret-starter.yaml
+   kubectl apply -f manifests/configmap-starter.yaml
+   kubectl apply -f manifests/secret-starter.yaml
+   ```
+
+2. **See what a Secret actually looks like at rest:**
+
+   ```bash
+   kubectl get secret hello-app-secret -o yaml
+   ```
+
+   Note the `data` field holds base64 text, even though you wrote
+   `stringData` (a convenience field — the API server encodes it for you on
+   the way in). Decode it yourself to prove the point:
+
+   ```bash
+   kubectl get secret hello-app-secret -o jsonpath='{.data.API_KEY}' | base64 -d
+   ```
+
+3. **Fill in and apply the Deployment** that wires the ConfigMap in *two
+   ways at once* (as the `MESSAGE` env var, and mounted as files at
+   `/etc/config`) and the Secret mounted as files at `/etc/secret`:
+
+   ```bash
+   kubectl apply -f manifests/deployment-with-config-starter.yaml
+   kubectl port-forward deployment/hello-app 5050:5000
+   ```
+
+   In another terminal (host port `5050` — see Module 1's note on macOS's
+   AirPlay Receiver squatting on port 5000):
+
+   ```bash
+   curl -s http://localhost:5050/config | python3 -m json.tool
+   ```
+
+   You should see `env.MESSAGE`, both files under `config_files` (including
+   `GREETING_LANG`, since the whole ConfigMap was mounted, not just one
+   key), and `API_KEY` under `secret_files`.
+
+4. **Reproduce the update-propagation gotcha.** Edit the ConfigMap:
+
+   ```bash
+   kubectl edit configmap hello-app-config
+   ```
+
+   Change `MESSAGE` to something new, save and exit. Then immediately:
+
+   ```bash
+   curl -s http://localhost:5050/config | python3 -m json.tool
+   ```
+
+   `env.MESSAGE` is unchanged — it was injected once at container start and
+   nothing re-injects it. Wait about a minute (kubelet's sync interval) and
+   curl again: `config_files.MESSAGE` (the *mounted file*) should now show
+   the new value, while `env.MESSAGE` still hasn't changed. The only way to
+   pick up the new env var value is to recreate the Pods, e.g.:
+
+   ```bash
+   kubectl rollout restart deployment hello-app
+   ```
+
+## Verify before moving on
+
+- State, without looking back, which of the two consumption methods
+  (env var vs. mounted file) picks up ConfigMap edits without a Pod
+  restart, and why.
+- Explain why `stringData` in a Secret manifest is just a convenience, not
+  a different storage mechanism from `data`.
+</script>
+
+<script type="text/markdown" id="md-07">
+## Concepts
+
+Containers' own filesystems are ephemeral by default — anything written
+inside a container disappears when it's removed. Kubernetes volumes are how
+you give Pods disk that outlives (or is at least separate from) the
+container's own writable layer.
+
+- **`emptyDir`** — a bare scratch directory created when the Pod starts and
+  **deleted when the Pod is deleted**. It survives container *restarts*
+  within the same Pod, but not Pod deletion. Good for scratch space or
+  sharing files between containers in the same Pod — not for anything you
+  actually want to keep.
+- **PersistentVolume (PV) / PersistentVolumeClaim (PVC)** — the real
+  persistence mechanism. A PVC is a *request* for storage ("I need 1Gi,
+  ReadWriteOnce"); Kubernetes binds it to a PV that satisfies it. On
+  minikube, a default `StorageClass` (backed by a `storage-provisioner`
+  addon, enabled automatically) dynamically creates a PV for you the moment
+  you create a PVC — you never have to provision one by hand.
+- **Access modes** — `ReadWriteOnce` (one node can mount it read-write at a
+  time — the common case for a single-replica workload), `ReadOnlyMany`,
+  `ReadWriteMany` (needs a storage backend that supports it; minikube's
+  default doesn't).
+
+## Hands-on
+
+### Part 1: emptyDir is genuinely ephemeral
+
+1. **Fill in and apply** `manifests/pod-emptydir-starter.yaml`:
+
+   ```bash
+   kubectl apply -f manifests/pod-emptydir-starter.yaml
+   kubectl port-forward pod/hello-app-emptydir 5050:5000
+   ```
+
+   In another terminal, increment the counter a few times (host port `5050`
+   — see Module 1's note on macOS's AirPlay Receiver squatting on port
+   5000):
+
+   ```bash
+   curl -s -X POST http://localhost:5050/count
+   curl -s -X POST http://localhost:5050/count
+   curl -s http://localhost:5050/count   # should show {"count": 2}
+   ```
+
+2. **Delete and recreate the Pod:**
+
+   ```bash
+   kubectl delete pod hello-app-emptydir
+   kubectl apply -f manifests/pod-emptydir-starter.yaml
+   kubectl port-forward pod/hello-app-emptydir 5050:5000
+   ```
+
+   ```bash
+   curl -s http://localhost:5050/count   # back to {"count": 0}
+   ```
+
+   The data is gone — a fresh `emptyDir` was created along with the fresh
+   Pod.
+
+### Part 2: PVC-backed storage survives Pod recreation
+
+3. **Fill in and apply the PVC**, then confirm it bound to a PV:
+
+   ```bash
+   kubectl apply -f manifests/pvc-starter.yaml
+   kubectl get pvc hello-app-data
+   ```
+
+   `STATUS` should become `Bound` within a few seconds.
+
+4. **Fill in and apply the Deployment** that mounts this PVC at `/data`:
+
+   ```bash
+   kubectl apply -f manifests/deployment-with-pvc-starter.yaml
+   kubectl port-forward deployment/hello-app-pvc 5001:5000
+   ```
+
+   ```bash
+   curl -s -X POST http://localhost:5001/count
+   curl -s -X POST http://localhost:5001/count
+   curl -s -X POST http://localhost:5001/count
+   curl -s http://localhost:5001/count   # {"count": 3}
+   ```
+
+5. **Delete the Pod (not the Deployment, not the PVC)** and let the
+   Deployment recreate it:
+
+   ```bash
+   kubectl delete pod -l app=hello-app-pvc
+   kubectl get pods -l app=hello-app-pvc -w
+   ```
+
+   Once the new Pod is `Running`, port-forward again and check the count:
+
+   ```bash
+   kubectl port-forward deployment/hello-app-pvc 5001:5000
+   curl -s http://localhost:5001/count   # still {"count": 3}
+   ```
+
+   The new Pod attached to the *same* underlying PV — the data survived.
+
+## Verify before moving on
+
+- Explain, in your own words, why the Deployment in this module is pinned
+  to `replicas: 1` and what would go wrong on minikube if you scaled it up
+  with the same PVC.
+- Name one thing that would make the emptyDir data survive a Pod restart
+  and one thing that would still lose it even with a PVC in place. (Hint
+  for the second one: what happens if you `minikube delete`?)
+</script>
+
+<script type="text/markdown" id="md-08">
+## Concepts
+
+**Namespaces** are logical partitions within one cluster — a way to
+separate workloads (by team, environment, or in this case, "training
+exercises") without needing separate clusters. Most resource types
+(Pods, Deployments, Services, ConfigMaps...) are namespace-scoped; a few
+(Nodes, PersistentVolumes, Namespaces themselves) are cluster-wide. Every
+`kubectl` command implicitly targets a namespace — `default` unless you
+say otherwise with `-n <namespace>` or by changing your context's default.
+
+**Resource requests and limits**, set per-container:
+
+- **`requests`** — what the scheduler guarantees is available before it
+  will place a Pod on a node. This is also what the HPA (Module 11) uses to
+  calculate CPU utilization percentage.
+- **`limits`** — the hard ceiling. Behavior differs by resource type:
+  - **CPU**: throttled if it exceeds the limit — the container slows down,
+    doesn't crash.
+  - **Memory**: the container is **OOMKilled** (forcibly terminated) if it
+    exceeds the limit — there's no "throttling" equivalent for memory.
+
+This module deliberately sets a memory limit *below* what a Python/Flask
+process needs, specifically to trigger and observe an OOMKill.
+
+## Hands-on
+
+1. **Create the `training` namespace:**
+
+   ```bash
+   # fill in manifests/namespace-starter.yaml
+   kubectl apply -f manifests/namespace-starter.yaml
+   kubectl get namespaces
+   ```
+
+2. *(Optional but convenient)* switch your shell's default namespace so you
+   don't have to type `-n training` on every command:
+
+   ```bash
+   kubectl config set-context --current --namespace=training
+   ```
+
+   You can always check which namespace you're pointed at with
+   `kubectl config view --minify | grep namespace`, and switch back later
+   with `kubectl config set-context --current --namespace=default`.
+
+3. **Fill in and apply the intentionally under-provisioned Deployment:**
+
+   ```bash
+   kubectl apply -f manifests/deployment-with-limits-starter.yaml
+   kubectl get pods -w
+   ```
+
+   Watch for `CrashLoopBackOff`.
+
+4. **Confirm it's actually an OOMKill:**
+
+   ```bash
+   kubectl describe pod -l app=hello-app
+   ```
+
+   Look for `Last State: Terminated`, `Reason: OOMKilled` in the output.
+
+5. **Check live resource usage** (needs the `metrics-server` addon from
+   Module 2):
+
+   ```bash
+   kubectl top pods
+   ```
+
+   If the Pod is crash-looping too fast to catch a metrics sample, that's
+   expected — it's dying almost immediately after starting.
+
+6. **Fix it.** Edit `manifests/deployment-with-limits-starter.yaml` (or just
+   `kubectl edit deployment hello-app`) and raise both `requests.memory` and
+   `limits.memory` to something realistic, e.g. `64Mi`. Reapply if you
+   edited the file:
+
+   ```bash
+   kubectl apply -f manifests/deployment-with-limits-starter.yaml
+   kubectl get pods -w
+   ```
+
+   It should now reach and stay in `Running`, `1/1 Ready`.
+
+7. **Reset your namespace context** before moving to Module 9, which needs
+   resources in `default`:
+
+   ```bash
+   kubectl config set-context --current --namespace=default
+   ```
+
+## Verify before moving on
+
+- Explain the difference in what happens when a container exceeds its CPU
+  limit vs. its memory limit.
+- Explain why `requests` matters even when a node has plenty of free
+  capacity right now (hint: what is the scheduler trying to prevent for the
+  *future*?).
+</script>
+
+<script type="text/markdown" id="md-09">
+## Concepts
+
+**Cluster DNS in full.** Module 5 mentioned Service DNS names briefly; here's
+the full picture. CoreDNS (running inside the cluster) resolves every
+Service to `<service-name>.<namespace>.svc.cluster.local`. From the *same*
+namespace as the Service, the short name works. From a *different*
+namespace, you need at least `<service-name>.<namespace>`, or the fully
+qualified name. This is a deliberate isolation boundary — it's why
+namespaces (Module 8) aren't just cosmetic.
+
+**Ingress** is an L7 (HTTP-aware) router that sits in front of your
+Services, letting you route based on hostname and path instead of exposing
+a NodePort per service. An Ingress *resource* is just a routing rule — it
+does nothing by itself without an **Ingress controller** actually running
+in the cluster to implement it. On minikube, `minikube addons enable
+ingress` installs the ingress-nginx controller, which is itself just a
+Deployment + Service, no different in kind from anything you've deployed
+yourself.
+
+## Hands-on
+
+### Part 1: cross-namespace DNS
+
+1. Make sure the Module 5 ClusterIP Service (`hello-app`, port 80) still
+   exists in the `default` namespace:
+
+   ```bash
+   kubectl get svc hello-app -n default
+   ```
+
+2. From the `training` namespace (created in Module 8), curl it using the
+   fully-qualified name:
+
+   ```bash
+   kubectl run tmp-curl -n training --rm -it --image=curlimages/curl --restart=Never -- \
+     curl -s http://hello-app.default.svc.cluster.local/
+   ```
+
+   Try the short name `hello-app` (without `.default...`) from the same
+   namespace-scoped run command and confirm it does **not** resolve — that's
+   the isolation boundary in action.
+
+### Part 2: Ingress
+
+3. **Enable the ingress controller** and wait for it to be ready:
+
+   ```bash
+   minikube addons enable ingress
+   kubectl get pods -n ingress-nginx -w
+   ```
+
+   `Ctrl+C` once the controller Pod shows `Running`, `1/1 Ready`.
+
+4. **Fill in and apply the Ingress**, routing host `hello.local` to the
+   `hello-app` Service on port 80:
+
+   ```bash
+   kubectl apply -f manifests/ingress-starter.yaml
+   kubectl get ingress hello-app
+   ```
+
+5. **Reach it via port-forward to the ingress controller itself.** (We use
+   port-forward rather than curling `$(minikube ip)` directly, because
+   whether that IP is reachable from your Mac depends on which Docker
+   backend minikube is using — port-forward works the same regardless, the
+   same reason Module 5 used `minikube service --url` instead of a raw
+   node IP.)
+
+   ```bash
+   kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
+   ```
+
+   In another terminal, set the `Host` header manually to simulate a real
+   request to `hello.local` (no need to edit `/etc/hosts`):
+
+   ```bash
+   curl -H "Host: hello.local" http://localhost:8080/
+   ```
+
+   You should get the same JSON response as always — now routed through
+   the Ingress controller instead of a direct Service hit.
+
+6. **Prove hostname-based routing matters** — request a host the Ingress
+   doesn't know about:
+
+   ```bash
+   curl -H "Host: nope.local" http://localhost:8080/
+   ```
+
+   This should fail (typically a 404 from the ingress-nginx default
+   backend), since no Ingress rule matches that host.
+
+## Verify before moving on
+
+- Explain why `curl http://hello-app/` worked in Module 5 (same namespace)
+  but needs the full DNS name from a different namespace.
+- Explain what an Ingress *resource* actually is, and why it does nothing
+  on a cluster with no ingress controller installed.
+</script>
+
+<script type="text/markdown" id="md-10">
+## Concepts
+
+Kubernetes doesn't know your app is unhealthy unless you tell it how to
+check. Three probe types, each controlling a different thing:
+
+- **`readinessProbe`** — "is this Pod ready to receive traffic *right now*?"
+  A failing readiness probe removes the Pod from every Service's endpoint
+  list (Module 5) — traffic stops flowing to it — but the Pod itself is
+  **not restarted**. Used for transient conditions (still warming up,
+  temporarily overloaded).
+- **`livenessProbe`** — "is this Pod's process still functioning, or is it
+  stuck/deadlocked?" A failing liveness probe gets the container
+  **restarted**. Used for conditions that generally only resolve by
+  restarting.
+- **`startupProbe`** — (not exercised directly here, but worth knowing)
+  useful for slow-starting apps: liveness/readiness checks are suspended
+  until the startup probe succeeds once, so a slow boot doesn't get
+  liveness-killed before it's even up.
+
+Key tuning fields: `initialDelaySeconds` (grace period before the first
+check), `periodSeconds` (how often to check), `failureThreshold`
+(consecutive failures needed before Kubernetes acts).
+
+`hello-app` exposes `GET /healthz` (used by both probes here) and
+`POST /toggle-health`, which flips a flag file so you can force a failure
+on command instead of waiting for a real bug.
+
+## Hands-on
+
+1. **Fill in and apply** the probe fields in
+   `manifests/deployment-probes-starter.yaml`:
+
+   ```bash
+   kubectl apply -f manifests/deployment-probes-starter.yaml
+   kubectl get pods -l app=hello-app
+   ```
+
+   Both Pods should reach `1/1 Ready`.
+
+2. **Force a failure on one Pod.** Pick one Pod name and port-forward
+   directly to it (not the Deployment, so you affect only one replica):
+
+   ```bash
+   kubectl port-forward pod/<pod-name> 5050:5000
+   ```
+
+   In another terminal (host port `5050` — see Module 1's note on macOS's
+   AirPlay Receiver squatting on port 5000):
+
+   ```bash
+   curl -X POST http://localhost:5050/toggle-health
+   curl http://localhost:5050/healthz   # should now return a 500
+   ```
+
+3. **Watch the readiness effect first** (faster — 2 failures × 3s period):
+
+   ```bash
+   kubectl get pods -w
+   ```
+
+   Within ~6-10 seconds, that Pod's `READY` column should drop to `0/1`
+   while `STATUS` stays `Running`. Confirm it was pulled from the Service's
+   endpoint list too:
+
+   ```bash
+   kubectl get endpoints hello-app
+   ```
+
+   (Only relevant if you still have the Module 5/6 Service around — if not,
+   the readiness signal is still visible directly in `kubectl get pods`.)
+
+4. **Watch the liveness effect** (slower — 3 failures × 5s period, plus the
+   5s initial delay): keep watching `kubectl get pods -w`. Once the
+   threshold is hit, you'll see `RESTARTS` increment for that Pod. Because
+   restarting the container also clears its `/tmp/unhealthy` flag file, the
+   Pod comes back healthy immediately and stabilizes at `1/1 Ready` again.
+
+5. **Confirm what happened via events:**
+
+   ```bash
+   kubectl describe pod <same-pod-name>
+   ```
+
+   Look in the `Events` section near the bottom for `Unhealthy` warnings
+   from both probes and a `Killing` event from the liveness failure.
+
+## Verify before moving on
+
+- Explain, without looking back, which probe type removes a Pod from
+  Service traffic vs. which one restarts the container.
+- If you set `initialDelaySeconds: 0` on a liveness probe for an app that
+  genuinely takes 30 seconds to boot, what would go wrong, and which probe
+  type exists specifically to prevent that?
+</script>
+
+<script type="text/markdown" id="md-11">
+## Concepts
+
+**HorizontalPodAutoscaler (HPA)** watches a metric (CPU utilization here)
+and adjusts `replicas` on a target Deployment automatically, between a
+floor and ceiling you define. It needs two things to function:
+
+1. `metrics-server` installed (Module 2) — it's the source of the actual
+   utilization numbers.
+2. `resources.requests.cpu` set on the target container — utilization is
+   calculated as *actual usage ÷ requested amount*, so without a request,
+   there's no denominator to compute a percentage from.
+
+**Rolling updates.** By default, a Deployment update uses the
+`RollingUpdate` strategy: it creates new-version Pods and terminates
+old-version ones gradually (governed by `maxSurge`/`maxUnavailable`,
+defaulting to 25% each), rather than replacing everything at once. Combined
+with readiness probes (Module 10), traffic only shifts to new Pods once
+they report ready — this is what makes zero-downtime deploys possible.
+`kubectl rollout` gives you visibility and control over this process:
+`status` (watch it happen), `history` (past revisions), `undo` (roll back).
+
+## Hands-on
+
+### Part 1: HPA and load-based autoscaling
+
+1. **Make sure `hello-app` is running in the `default` namespace** with a
+   CPU request set (needed for HPA math). If you still have the Module 4/10
+   Deployment around, just add resource settings to it:
+
+   ```bash
+   kubectl config set-context --current --namespace=default
+   kubectl set resources deployment hello-app --requests=cpu=50m --limits=cpu=200m
+   ```
+
+   If no `hello-app` Deployment exists in `default`, reapply
+   `../04-deployments/solution/deployment.yaml` first, then run the command
+   above.
+
+2. **Fill in and apply the HPA:**
+
+   ```bash
+   kubectl apply -f manifests/hpa-starter.yaml
+   kubectl get hpa hello-app -w
+   ```
+
+   Leave this running in its own terminal — you'll watch `REPLICAS` and
+   `TARGETS` (current vs. target CPU%) change live.
+
+3. **Generate load**, in another terminal, against the ClusterIP Service
+   from Module 5 (`hello-app`, port 80):
+
+   ```bash
+   kubectl run load-generator --image=busybox:1.36 --restart=Never -it --rm -- \
+     /bin/sh -c "while true; do wget -q -O- http://hello-app.default.svc.cluster.local/; done"
+   ```
+
+   Watch the HPA terminal — within a minute or two, `TARGETS` should climb
+   and `REPLICAS` should scale up toward `maxReplicas`.
+
+4. **Stop the load** (`Ctrl+C` the load-generator command — `--rm` cleans it
+   up) and keep watching the HPA. Scale-down is deliberately conservative
+   (a stabilization window, several minutes by default) to avoid
+   flapping — be patient.
+
+### Part 2: rolling update and rollback
+
+5. **Ship a v2.** Bump `APP_VERSION`'s default in
+   `../apps/hello-app/app.py`, e.g. from `"v1"` to `"v2"`. Rebuild (make
+   sure `minikube docker-env` is still active in this shell — Module 2):
+
+   ```bash
+   cd ../apps/hello-app
+   docker build -t hello-app:v2 .
+   cd ../../11-scaling-rolling-updates
+   ```
+
+6. **Trigger the rollout:**
+
+   ```bash
+   kubectl set image deployment/hello-app hello-app=hello-app:v2
+   kubectl rollout status deployment/hello-app
+   ```
+
+7. **Watch old and new versions briefly coexist**, in another terminal,
+   while the rollout is in progress:
+
+   ```bash
+   for i in $(seq 1 20); do
+     kubectl run tmp-curl-$i --rm -i --image=curlimages/curl --restart=Never -- \
+       curl -s http://hello-app.default.svc.cluster.local/ 2>/dev/null | grep app_version
+   done
+   ```
+
+   With only a couple of replicas this window may be short — if you missed
+   it, `kubectl rollout history deployment/hello-app` still proves it
+   happened.
+
+8. **Roll back:**
+
+   ```bash
+   kubectl rollout undo deployment/hello-app
+   kubectl rollout status deployment/hello-app
+   kubectl port-forward deployment/hello-app 5050:5000 &
+   curl -s http://localhost:5050/   # app_version should be back to v1
+   kill %1                          # stop the background port-forward
+   ```
+
+## Verify before moving on
+
+- Explain why the HPA couldn't compute anything before you set a CPU
+  `request` on the Deployment.
+- Explain why scale-up and scale-down aren't symmetric in responsiveness,
+  and why that asymmetry is a reasonable default.
+</script>
+
+<script type="text/markdown" id="md-12">
+## Concepts
+
+**The debugging loop.** Almost every Kubernetes problem is diagnosable with
+the same small toolkit, applied in this order:
+
+1. `kubectl get pods` — what's the `STATUS`? (`Pending`, `ImagePullBackOff`,
+   `CrashLoopBackOff`, `Running` are all different problem classes.)
+2. `kubectl describe pod <name>` — the `Events` section at the bottom is
+   usually where the real story is (scheduling failures, pull failures,
+   probe failures — all show up here).
+3. `kubectl logs <name>` (add `--previous` if it already crashed) — what did
+   the *application* say before it died?
+4. `kubectl exec -it <name> -- sh` — if it's running but misbehaving, get
+   inside and poke around.
+5. `kubectl top pods` / `kubectl top nodes` — is this a resource problem?
+6. `kubectl get events --sort-by=.lastTimestamp` — cluster-wide event
+   timeline, useful when you're not sure which object is at fault.
+
+Common status signatures worth recognizing on sight: `Pending` +
+"Insufficient cpu/memory" in events → scheduling/resource problem;
+`ImagePullBackOff`/`ErrImagePull` → wrong image name/tag or registry access;
+`CrashLoopBackOff` → the container starts then exits (check logs); a Pod
+stuck `Running` but never `Ready` → check probes (Module 10).
+
+**Helm**, briefly: a package manager for Kubernetes manifests. A *chart* is
+a templated bundle of manifests plus a `values.yaml` for overrides — instead
+of hand-editing YAML for every environment, you parameterize it once and
+override values at install time. `helm install`/`upgrade`/`rollback` wrap
+the same underlying `kubectl apply` mechanics you've been using all course,
+with versioning and templating layered on top.
+
+## Hands-on
+
+### Part 1: diagnose and fix (layered — expect to hit these one at a time)
+
+1. **Apply the broken manifest:**
+
+   ```bash
+   kubectl apply -f manifests/broken-deployment.yaml
+   kubectl get pods -l app=hello-app-broken
+   ```
+
+2. **Bug #1 — it's stuck `Pending`.** Investigate:
+
+   ```bash
+   kubectl describe pod -l app=hello-app-broken
+   ```
+
+   Find the scheduling failure in `Events`. Fix the offending field in
+   `manifests/broken-deployment.yaml` (something reasonable, e.g. `64Mi`),
+   then reapply:
+
+   ```bash
+   kubectl apply -f manifests/broken-deployment.yaml
+   kubectl get pods -l app=hello-app-broken -w
+   ```
+
+3. **Bug #2 — now it's `ImagePullBackOff` / `ErrImageNeverPull`.**
+   Investigate the same way, find the bad image reference, and fix it to
+   `hello-app:v1` (the image you already built into minikube back in
+   Module 2). Reapply.
+
+4. **Bug #3 — it's `Running` and `Ready`, but something's still off.**
+   Port-forward and check:
+
+   ```bash
+   kubectl port-forward deployment/hello-app-broken 5002:5000
+   curl -s http://localhost:5002/config
+   ```
+
+   `env.MESSAGE` is `null` even though the manifest clearly sets an env
+   var — not every bug crashes the Pod. Find the mismatch, fix it, reapply,
+   and confirm `env.MESSAGE` now shows the intended text.
+
+5. **Clean up:**
+
+   ```bash
+   kubectl delete -f manifests/broken-deployment.yaml
+   ```
+
+### Part 2: package hello-app with Helm
+
+6. **Install Helm** if you don't have it:
+
+   ```bash
+   brew install helm
+   helm version
+   ```
+
+7. **Scaffold a chart** from the standard template (don't use a third-party
+   chart here — public chart catalogs like Bitnami's have had major
+   availability/maintenance changes since 2025, so building your own from
+   what you already understand is both more reliable and better practice):
+
+   ```bash
+   helm create hello-chart
+   ```
+
+   Look at what it generated: `Chart.yaml` (metadata), `values.yaml`
+   (overridable config), `templates/` (the actual manifest templates, using
+   Go templating to reference `.Values.*`).
+
+8. **Point it at your own app.** Open `hello-chart/values.yaml` and edit the
+   `image` section to:
+
+   ```yaml
+   image:
+     repository: hello-app
+     tag: "v1"
+     pullPolicy: IfNotPresent
+   ```
+
+   and the `service` section's `port` to `5000` (the default scaffold wires
+   the container's port to `service.port` under the hood — check
+   `templates/deployment.yaml` if you want to see exactly how). This is
+   itself a small troubleshooting exercise: if something looks off after
+   install, use the Part 1 toolkit on it.
+
+9. **Install the chart:**
+
+   ```bash
+   helm install hello-release ./hello-chart
+   kubectl get all -l app.kubernetes.io/instance=hello-release
+   helm status hello-release
+   ```
+
+10. **Upgrade it** to the `v2` image you built in Module 11 (rebuild it here
+    if you no longer have it):
+
+    ```bash
+    helm upgrade hello-release ./hello-chart --set image.tag=v2
+    kubectl rollout status deployment -l app.kubernetes.io/instance=hello-release
+    ```
+
+11. **Roll back and clean up:**
+
+    ```bash
+    helm history hello-release
+    helm rollback hello-release 1
+    helm list
+    helm uninstall hello-release
+    ```
+
+## Verify — and reflect on the whole course
+
+- Walk through Part 1 once more from memory, out loud, without the
+  README: `get` → `describe` → `logs` → fix → reapply. This loop is the
+  single most reusable skill from this entire course.
+- Compare what `helm install` did under the hood to everything you did by
+  hand in Modules 3-11 — same primitives, templated and versioned.
+
+You've now covered containers, Pods, Deployments, Services, config/secrets,
+storage, namespaces/resources, DNS/Ingress, probes, scaling/rollouts, and
+debugging/Helm — a genuinely solid working foundation. From here, the best
+next step is applying this to a real (even small) project rather than
+more tutorials.
+</script>
+
+<script>
+(function () {
+  var MODULES = [
+    { id: '00', eyebrow: 'START HERE', title: 'Course Overview', concept: '' },
+    { id: '01', eyebrow: 'MODULE 01', title: 'Docker Fundamentals', concept: 'Containers, images, Dockerfiles' },
+    { id: '02', eyebrow: 'MODULE 02', title: 'Kubernetes Architecture & Your First Cluster', concept: 'Control plane/nodes, minikube, YAML basics' },
+    { id: '03', eyebrow: 'MODULE 03', title: 'Pods', concept: 'The smallest deployable unit' },
+    { id: '04', eyebrow: 'MODULE 04', title: 'Deployments & ReplicaSets', concept: 'Declarative, self-healing workloads' },
+    { id: '05', eyebrow: 'MODULE 05', title: 'Services', concept: 'Stable networking for a set of Pods' },
+    { id: '06', eyebrow: 'MODULE 06', title: 'ConfigMaps & Secrets', concept: 'Externalizing configuration' },
+    { id: '07', eyebrow: 'MODULE 07', title: 'Volumes & Persistent Storage', concept: 'Ephemeral vs. persistent data' },
+    { id: '08', eyebrow: 'MODULE 08', title: 'Namespaces & Resource Management', concept: 'Isolation, requests/limits' },
+    { id: '09', eyebrow: 'MODULE 09', title: 'Networking II: DNS & Ingress', concept: 'Cluster DNS, L7 routing' },
+    { id: '10', eyebrow: 'MODULE 10', title: 'Health Checks: Probes', concept: 'Liveness, readiness, startup' },
+    { id: '11', eyebrow: 'MODULE 11', title: 'Scaling & Rolling Updates', concept: 'HPA, zero-downtime deploys' },
+    { id: '12', eyebrow: 'MODULE 12', title: 'Troubleshooting, Observability & Helm', concept: 'Debugging loop, packaging with Helm' }
+  ];
+
+  var PROGRESS_KEY = 'k8s-field-manual-progress';
+  var LAST_KEY = 'k8s-field-manual-last';
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveProgress(list) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function saveLast(id) {
+    try { localStorage.setItem(LAST_KEY, id); } catch (e) {}
+  }
+
+  function loadLast() {
+    try { return localStorage.getItem(LAST_KEY); } catch (e) { return null; }
+  }
+
+  var completed = loadProgress();
+
+  function isDone(id) { return completed.indexOf(id) !== -1; }
+
+  function toggleDone(id) {
+    var i = completed.indexOf(id);
+    if (i === -1) { completed.push(id); } else { completed.splice(i, 1); }
+    saveProgress(completed);
+    renderSidebar();
+    updateProgress();
+  }
+
+  function updateProgress() {
+    var numbered = MODULES.filter(function (m) { return m.id !== '00'; });
+    var done = numbered.filter(function (m) { return isDone(m.id); }).length;
+    document.getElementById('progress-text').textContent = done + ' / ' + numbered.length + ' complete';
+    document.getElementById('progress-fill').style.width = (done / numbered.length * 100) + '%';
+  }
+
+  function checkIconSVG() {
+    return '<svg viewBox="0 0 16 16" width="10" height="10" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function renderSidebar() {
+    var nav = document.getElementById('module-nav');
+    nav.innerHTML = '';
+    MODULES.forEach(function (m) {
+      var row = document.createElement('div');
+      row.className = 'nav-item' + (m.id === currentId ? ' active' : '') + (m.id === '00' ? ' overview' : '');
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+
+      var num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = m.id === '00' ? '--' : m.id;
+      row.appendChild(num);
+
+      var label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = m.title;
+      row.appendChild(label);
+
+      if (m.id !== '00') {
+        var check = document.createElement('span');
+        check.className = 'check' + (isDone(m.id) ? ' done' : '');
+        check.innerHTML = isDone(m.id) ? checkIconSVG() : '';
+        check.title = isDone(m.id) ? 'Mark incomplete' : 'Mark complete';
+        check.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleDone(m.id);
+        });
+        row.appendChild(check);
+      }
+
+      row.addEventListener('click', function () { navigate(m.id); });
+      row.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(m.id); }
+      });
+
+      nav.appendChild(row);
+    });
+  }
+
+  var currentId = null;
+
+  function navigate(id) {
+    render(id);
+    closeMobileNav();
+  }
+
+  function wrapCodeBlocks(container) {
+    var blocks = container.querySelectorAll('pre > code');
+    blocks.forEach(function (codeEl) {
+      var pre = codeEl.parentElement;
+      if (pre.parentElement.classList.contains('code-block')) return;
+
+      try { hljs.highlightElement(codeEl); } catch (e) {}
+
+      var langMatch = (codeEl.className || '').match(/language-(\w+)/);
+      var lang = langMatch ? langMatch[1] : '';
+
+      var wrap = document.createElement('div');
+      wrap.className = 'code-block';
+
+      var toolbar = document.createElement('div');
+      toolbar.className = 'code-toolbar';
+
+      var langLabel = document.createElement('span');
+      langLabel.className = 'code-lang';
+      langLabel.textContent = lang || 'code';
+      toolbar.appendChild(langLabel);
+
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.type = 'button';
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', function () {
+        var text = codeEl.textContent;
+        try {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.textContent = 'Copied';
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+          }, function () {
+            copyBtn.textContent = 'Failed';
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+          });
+        } catch (e) {
+          copyBtn.textContent = 'Failed';
+          setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+        }
+      });
+      toolbar.appendChild(copyBtn);
+
+      pre.parentElement.insertBefore(wrap, pre);
+      wrap.appendChild(toolbar);
+      wrap.appendChild(pre);
+    });
+  }
+
+  function wrapTables(container) {
+    var tables = container.querySelectorAll('table');
+    tables.forEach(function (t) {
+      var wrap = document.createElement('div');
+      wrap.className = 'content-table-wrap';
+      t.parentElement.insertBefore(wrap, t);
+      wrap.appendChild(t);
+    });
+  }
+
+  function pagerHTML(idx) {
+    var prev = idx > 0 ? MODULES[idx - 1] : null;
+    var next = idx < MODULES.length - 1 ? MODULES[idx + 1] : null;
+    var html = '<div class="pager">';
+    if (prev) {
+      html += '<a href="javascript:void(0)" class="prev" data-nav="' + prev.id + '"><span class="pager-dir">&larr; Previous</span><span class="pager-title">' + prev.title + '</span></a>';
+    } else {
+      html += '<span></span>';
+    }
+    if (next) {
+      html += '<a href="javascript:void(0)" class="next" data-nav="' + next.id + '"><span class="pager-dir">Next &rarr;</span><span class="pager-title">' + next.title + '</span></a>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function render(id) {
+    var idx = MODULES.findIndex(function (m) { return m.id === id; });
+    if (idx === -1) { id = '00'; idx = 0; }
+    currentId = id;
+    saveLast(id);
+
+    var m = MODULES[idx];
+    var mdEl = document.getElementById('md-' + id);
+    var mdText = mdEl ? mdEl.textContent : '';
+    var bodyHtml = marked.parse(mdText);
+
+    var content = document.getElementById('content');
+    var headHtml = '<div class="content-eyebrow">' + m.eyebrow + '</div>' +
+      '<h1 class="page-title">' + m.title + '</h1>' +
+      (m.concept ? '<p class="page-concept">' + m.concept + '</p>' : '');
+
+    var footerHtml = '<div class="content-footer">';
+    if (id !== '00') {
+      footerHtml += '<button class="complete-toggle' + (isDone(id) ? ' done' : '') + '" id="complete-btn">' +
+        '<span class="check">' + (isDone(id) ? checkIconSVG() : '') + '</span>' +
+        '<span>' + (isDone(id) ? 'Module complete' : 'Mark module complete') + '</span>' +
+        '</button>';
+    }
+    footerHtml += pagerHTML(idx) + '</div>';
+
+    content.innerHTML = headHtml + bodyHtml + footerHtml;
+
+    wrapCodeBlocks(content);
+    wrapTables(content);
+
+    content.querySelectorAll('a[data-nav]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        navigate(a.getAttribute('data-nav'));
+      });
+    });
+    content.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      var target = a.getAttribute('href').slice(1);
+      if (MODULES.some(function (m) { return m.id === target; })) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          navigate(target);
+        });
+      }
+    });
+
+    if (id !== '00') {
+      document.getElementById('complete-btn').addEventListener('click', function () {
+        toggleDone(id);
+        render(id);
+      });
+    }
+
+    renderSidebar();
+    updateProgress();
+    document.getElementById('content-wrap').scrollTop = 0;
+  }
+
+  function openMobileNav() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('backdrop').classList.add('open');
+  }
+  function closeMobileNav() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('backdrop').classList.remove('open');
+  }
+
+  document.getElementById('menu-toggle').addEventListener('click', openMobileNav);
+  document.getElementById('backdrop').addEventListener('click', closeMobileNav);
+
+  marked.setOptions({ gfm: true, breaks: false });
+
+  var startId = loadLast() || '00';
+  if (!MODULES.some(function (m) { return m.id === startId; })) startId = '00';
+  render(startId);
+})();
+</script>
+</body>
+</html>

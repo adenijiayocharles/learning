@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-app-nodeport
+spec:
+  type: NodePort
+  selector:
+    # TODO: which label do the hello-app Pods carry?
+    app: ???
+  ports:
+    - port: ???        # TODO: the Service's own port
+      targetPort: ???  # TODO: the container's listening port

@@ -1,0 +1,33 @@
+# This manifest is intentionally broken in THREE separate, stacked ways.
+# Do not fix it by reading this comment — diagnose it using kubectl.
+# There is no solution/ file for this module: finding and fixing each bug
+# using only kubectl introspection is the entire exercise.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app-broken
+  labels:
+    app: hello-app-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app-broken
+  template:
+    metadata:
+      labels:
+        app: hello-app-broken
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v9
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MESSAG
+              value: "This should say hello, but the env var name has a typo"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 500Gi

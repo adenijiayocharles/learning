@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #F4F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAEEF2;
+    --ink: #16202B;
+    --muted: #5B6B7A;
+    --accent: #D9642B;
+    --line: #D7DEE5;
+    --shadow: 0 8px 24px rgba(22, 32, 43, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E141B;
+      --surface: #141C25;
+      --surface-2: #0B1117;
+      --ink: #E7ECF1;
+      --muted: #8CA0B3;
+      --accent: #FF8A50;
+      --line: #26323D;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E141B;
+    --surface: #141C25;
+    --surface-2: #0B1117;
+    --ink: #E7ECF1;
+    --muted: #8CA0B3;
+    --accent: #FF8A50;
+    --line: #26323D;
+    --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5rem) 1.5rem 5rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .brand-mark { color: var(--accent); flex-shrink: 0; }
+
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+
+  .brand-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .lede {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 56ch;
+    margin: 0 0 3rem;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 0 0 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .courses {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .course-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 1.5rem 1.75rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .course-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .course-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--accent);
+  }
+
+  .course-body { flex: 1; min-width: 0; }
+
+  .course-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .course-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-desc {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 52ch;
+  }
+
+  .course-cta {
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .course-card:hover .course-cta { color: var(--accent); }
+
+  .empty-note {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="brand">
+    <svg class="brand-mark" width="26" height="26" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="14" cy="6" r="3" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="5" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="23" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M14 9 L5.5 18.2 M14 9 L22.5 18.2" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+    <div>
+      <div class="brand-eyebrow">SELF-PACED</div>
+      <div class="brand-title">Learning Hub</div>
+    </div>
+  </div>
+
+  <h1>Pick a course to launch.</h1>
+  <p class="lede">
+    Hands-on, self-contained courses — each one pairs short concept notes
+    with real exercises you run yourself, not slides.
+  </p>
+
+  <div class="section-label">Courses</div>
+
+  <div class="courses">
+    <a class="course-card" href="./kubernetes/index.html">
+      <div class="course-icon">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="14" cy="6" r="3" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="5" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="23" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M14 9 L5.5 18.2 M14 9 L22.5 18.2" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </div>
+      <div class="course-body">
+        <div class="course-title">Kubernetes</div>
+        <div class="course-meta">12 modules · hands-on labs</div>
+        <div class="course-desc">
+          From Docker fundamentals to Helm — build, break, and fix a real
+          local cluster with one running app throughout.
+        </div>
+      </div>
+      <div class="course-cta">Launch &rarr;</div>
+    </a>
+  </div>
+
+  <p class="empty-note">
+    More courses land here as they're built — this page just lists whatever
+    exists in this directory.
+  </p>
+</div>
+
+</body>
+</html>

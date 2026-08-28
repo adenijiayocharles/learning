@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app-pvc
+  labels:
+    app: hello-app-pvc
+spec:
+  # Kept at 1 replica: a ReadWriteOnce PVC can only be mounted by one Pod at a time.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-app-pvc
+  template:
+    metadata:
+      labels:
+        app: hello-app-pvc
+    spec:
+      containers:
+        - name: hello-app
+          image: hello-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            # TODO: name of the PVC to bind this volume to
+            claimName: ???
