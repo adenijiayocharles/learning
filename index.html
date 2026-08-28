@@ -57,11 +57,6 @@
 
   body {
     min-height: 100vh;
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 32px 32px;
-    background-position: -1px -1px;
   }
 
   .wrap {
@@ -217,8 +212,9 @@
 
   <h1>Pick a course to launch.</h1>
   <p class="lede">
-    Hands-on, self-contained courses — each one pairs short concept notes
-    with real exercises you run yourself, not slides.
+    Self-contained courses — each one pairs short concept notes with a real,
+    hands-on way to explore them: labs for some, interactive simulations for
+    others.
   </p>
 
   <div class="section-label">Courses</div>
@@ -239,6 +235,27 @@
         <div class="course-desc">
           From Docker fundamentals to Helm — build, break, and fix a real
           local cluster with one running app throughout.
+        </div>
+      </div>
+      <div class="course-cta">Launch &rarr;</div>
+    </a>
+
+    <a class="course-card" href="./cap-theorem/index.html">
+      <div class="course-icon">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="6" cy="14" r="3" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="22" cy="14" r="3" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M9 14 L14 14" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M16.5 14 L19 14" stroke="currentColor" stroke-width="1.6" stroke-dasharray="1.6 1.8"/>
+        </svg>
+      </div>
+      <div class="course-body">
+        <div class="course-title">CAP Theorem</div>
+        <div class="course-meta">Interactive simulation · low-poly</div>
+        <div class="course-desc">
+          Cut off a node, watch the tradeoff play out, then heal it — a
+          hands-on (and accurately-sourced) look at what CAP actually says,
+          built as a small isometric ride instead of a reading list.
         </div>
       </div>
       <div class="course-cta">Launch &rarr;</div>

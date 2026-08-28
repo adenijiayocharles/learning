@@ -15,6 +15,7 @@
     --bg: #F4F6F8;
     --surface: #FFFFFF;
     --surface-2: #EAEEF2;
+    --sidebar-bg: #E2E7EC;
     --ink: #16202B;
     --muted: #5B6B7A;
     --accent: #D9642B;
@@ -32,6 +33,7 @@
       --bg: #0E141B;
       --surface: #141C25;
       --surface-2: #0B1117;
+      --sidebar-bg: #080C11;
       --ink: #E7ECF1;
       --muted: #8CA0B3;
       --accent: #FF8A50;
@@ -49,6 +51,7 @@
     --bg: #0E141B;
     --surface: #141C25;
     --surface-2: #0B1117;
+    --sidebar-bg: #080C11;
     --ink: #E7ECF1;
     --muted: #8CA0B3;
     --accent: #FF8A50;
@@ -93,7 +96,7 @@
   .sidebar {
     width: 300px;
     flex-shrink: 0;
-    background: var(--surface-2);
+    background: var(--sidebar-bg);
     border-right: 1px solid var(--line);
     display: flex;
     flex-direction: column;
@@ -101,12 +104,6 @@
     position: sticky;
     top: 0;
     overflow-y: auto;
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-position: -1px -1px;
-    background-attachment: local;
   }
 
   .brand {
@@ -132,6 +129,20 @@
     font-size: 1.25rem;
     letter-spacing: -0.01em;
   }
+
+  a.home-link {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: none;
+    margin: 0 1.5rem 1.25rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  a.home-link:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
 
   .progress-block {
     padding: 0 1.5rem 1.25rem;
@@ -506,6 +517,7 @@
         <div class="brand-title">Kubernetes</div>
       </div>
     </div>
+    <a class="home-link" href="../index.html">&larr; Learning Hub</a>
     <div class="progress-block">
       <div class="progress-label">
         <span id="progress-text">0 / 12 complete</span>

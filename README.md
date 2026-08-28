@@ -1,8 +1,8 @@
 # Learning
 
-Self-paced, hands-on courses for learning infrastructure and engineering
-topics — each one pairs short concept notes with real exercises you run
-yourself, not slides.
+Self-paced courses for learning infrastructure and engineering topics —
+each one pairs short concept notes with a real, hands-on way to explore
+them: labs for some, interactive simulations for others.
 
 ## Getting started
 
@@ -12,19 +12,22 @@ want to jump straight in.
 
 ## Courses
 
-| Course | Modules | Description |
-|--------|---------|-------------|
-| [Kubernetes](./kubernetes/) | 12 | From Docker fundamentals to Helm — build, break, and fix a real local cluster with one running app throughout. |
+| Course | Format | Description |
+|--------|--------|-------------|
+| [Kubernetes](./kubernetes/) | 12-module hands-on lab | From Docker fundamentals to Helm — build, break, and fix a real local cluster with one running app throughout. |
+| [CAP Theorem](./cap-theorem/) | Interactive simulation | Cut off a node, watch the consistency/availability tradeoff play out, then heal it — a low-poly, isometric, accurately-sourced look at what CAP theorem actually says. |
 
 More courses land here as they're built.
 
 ## How a course is structured
 
-Every course follows the same shape:
+Every course has a `README.md` and an `index.html` you can open directly in
+a browser. Beyond that, the shape depends on the format:
 
-- **`README.md`** — course index and prerequisites.
-- **`index.html`** — a browsable version of the course with navigation and
-  progress tracking, generated from the same content as the READMEs.
-- Numbered module folders, each with a `README.md` (concept + hands-on
-  exercise), starter manifests/config with `# TODO`s to fill in, and a
-  `solution/` to check your work against.
+- **Hands-on labs** (e.g. Kubernetes) add numbered module folders, each with
+  its own `README.md` (concept + exercise), starter manifests/config with
+  `# TODO`s to fill in, and a `solution/` to check your work against; the
+  `index.html` is a navigable, progress-tracked version of those READMEs.
+- **Interactive simulations** (e.g. CAP Theorem) skip the module/solution
+  structure entirely — the `index.html` *is* the course, and the `README.md`
+  is the sourced explanation behind what it's simulating.

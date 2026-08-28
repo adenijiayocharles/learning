@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partition Park — CAP Theorem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" integrity="sha384-qOkzR5Ke/XkQxuGVJ9hpFEpDlcoLtWwVYhnJf06cLIZa2vaIptSqaubivErzmD5O" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #F4F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAEEF2;
+    --ink: #16202B;
+    --muted: #5B6B7A;
+    --accent: #D9642B;
+    --accent-ink: #FFFFFF;
+    --line: #D7DEE5;
+    --good: #2E7D53;
+    --warn: #B5790A;
+    --stale: #7C5CD6;
+    --info: #2563AA;
+    --shadow: 0 8px 24px rgba(22, 32, 43, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E141B;
+      --surface: #141C25;
+      --surface-2: #0B1117;
+      --ink: #E7ECF1;
+      --muted: #8CA0B3;
+      --accent: #FF8A50;
+      --accent-ink: #1A0E06;
+      --line: #26323D;
+      --good: #5FBE8A;
+      --warn: #E0A526;
+      --stale: #A98BFF;
+      --info: #6AAEF0;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E141B;
+    --surface: #141C25;
+    --surface-2: #0B1117;
+    --ink: #E7ECF1;
+    --muted: #8CA0B3;
+    --accent: #FF8A50;
+    --accent-ink: #1A0E06;
+    --line: #26323D;
+    --good: #5FBE8A;
+    --warn: #E0A526;
+    --stale: #A98BFF;
+    --info: #6AAEF0;
+    --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+
+  #canvas-container {
+    position: absolute;
+    inset: 0;
+  }
+
+  #canvas-container canvas { display: block; }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface-2);
+    border-right: 1px solid var(--line);
+    padding: 1.5rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stage {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+  }
+
+  .dock-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    padding: 1.25rem;
+    pointer-events: none;
+  }
+
+  .dock-overlay .dock { pointer-events: auto; }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .brand-mark { color: var(--accent); flex-shrink: 0; }
+
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  .brand-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  a.home-link {
+    display: inline-flex;
+    align-self: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-decoration: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.75rem;
+  }
+  a.home-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  #caption {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 0.9rem 1.1rem;
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+
+  #caption strong { color: var(--accent); }
+
+  .dock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn:hover { border-color: var(--accent); }
+
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn:disabled:hover { border-color: var(--line); }
+
+  .btn.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--good);
+    flex-shrink: 0;
+  }
+
+  .dot.warn { background: var(--warn); }
+  .dot.stale { background: var(--stale); }
+  .dot.info { background: var(--info); }
+
+  .policy-group {
+    display: none;
+    gap: 0.4rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 0.3rem;
+  }
+
+  .policy-group.visible { display: flex; }
+
+  .policy-group .btn {
+    box-shadow: none;
+    border: 1px solid transparent;
+  }
+
+  .policy-group .btn.selected {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  details.techniques {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  details.techniques summary {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+
+  .techniques-body { padding: 0 1.1rem 1rem; color: var(--ink); }
+  .techniques-body h4 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.85rem;
+    margin: 1.1rem 0 0.5rem;
+    color: var(--accent);
+  }
+  .techniques-body h4:first-of-type { margin-top: 0.25rem; }
+  .techniques-body ul { margin: 0 0 0.5rem; padding-left: 1.2rem; }
+  .techniques-body li { margin-bottom: 0.5rem; }
+  .techniques-body ul ul { margin-top: 0.5rem; }
+  .techniques-intro, .techniques-note {
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+  .techniques-note {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  details.sources {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 0.82rem;
+  }
+
+  details.sources summary {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  details.sources ul {
+    margin: 0;
+    padding: 0 1.1rem 1rem 1.6rem;
+    color: var(--muted);
+  }
+
+  details.sources li { margin-bottom: 0.5rem; }
+  details.sources a { color: var(--info); }
+
+  .concepts-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .concept-chip {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+
+  .concept-chip summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .concept-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--accent);
+    border: 1px solid var(--line);
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .concept-chip p {
+    margin: 0;
+    padding: 0 0.8rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .concept-chip.active { border-width: 2px; }
+  .concept-chip.active summary { padding: calc(0.5rem - 1px) calc(0.8rem - 1px); }
+  #concept-c.active { border-color: var(--good); }
+  #concept-c.active .concept-letter { color: var(--good); border-color: var(--good); }
+  #concept-a.active { border-color: var(--stale); }
+  #concept-a.active .concept-letter { color: var(--stale); border-color: var(--stale); }
+  #concept-p.active { border-color: var(--warn); }
+  #concept-p.active .concept-letter { color: var(--warn); border-color: var(--warn); }
+
+  details.primer {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    font-size: 0.88rem;
+  }
+
+  details.primer summary {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  details.primer .primer-body {
+    padding: 0 1.1rem 1rem;
+    color: var(--ink);
+  }
+
+  details.primer p { margin: 0 0 0.75rem; }
+  details.primer p:last-child { margin-bottom: 0; }
+
+  #min-width-notice, #no-webgl-notice {
+    display: none;
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg);
+  }
+
+  #min-width-notice .box, #no-webgl-notice .box {
+    max-width: 420px;
+  }
+
+  #min-width-notice h2, #no-webgl-notice h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.3rem;
+    margin: 0 0 0.75rem;
+  }
+
+  #min-width-notice p, #no-webgl-notice p {
+    color: var(--muted);
+    margin: 0;
+  }
+
+  @media (max-width: 700px) {
+    .app { display: none; }
+    #min-width-notice { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" width="22" height="22" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="14" cy="6" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="5" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="23" cy="21" r="3" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M14 9 L5.5 18.2" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M17.5 13.5 L22.6 18.2" stroke="currentColor" stroke-width="1.6" stroke-dasharray="1.6 1.8"/>
+      </svg>
+      <div>
+        <div class="brand-eyebrow">CAP THEOREM SIMULATION</div>
+        <div class="brand-title">Partition Park</div>
+      </div>
+    </div>
+    <a class="home-link" href="../index.html">&larr; Learning Hub</a>
+
+    <div class="concepts-row">
+      <details class="concept-chip" id="concept-c">
+        <summary><span class="concept-letter">C</span> Consistency</summary>
+        <p>Every node gives the same, up-to-date answer — nobody sees stale or conflicting data.</p>
+      </details>
+      <details class="concept-chip" id="concept-a">
+        <summary><span class="concept-letter">A</span> Availability</summary>
+        <p>Every request gets some answer right away — the system never just goes silent.</p>
+      </details>
+      <details class="concept-chip" id="concept-p">
+        <summary><span class="concept-letter">P</span> Partition</summary>
+        <p>Part of the network loses contact with another part — a cable fails, a router drops packets. Nobody chooses this; it's just something that can happen.</p>
+      </details>
+    </div>
+
+    <details class="primer" open id="primer">
+      <summary>New here? Start with the basics ▾</summary>
+      <div class="primer-body">
+        <p><strong>What you're looking at:</strong> the building in the middle is a <strong>client</strong> — think of it as your phone or browser, making a request. The three buildings around it are <strong>nodes</strong>: separate servers that each keep their own copy of the same data (a <strong>replica</strong>), so the system keeps working even if one of them goes down. Each cart riding the tracks is one <strong>request</strong>, heading out and coming back with an answer.</p>
+        <p><strong>What CAP theorem actually says:</strong> when part of the network can't reach another part (a <strong>partition</strong> — the "P" card above), the system has to make a choice for the requests stuck on the wrong side of the gap: make them <strong>wait</strong> for a guaranteed-correct answer (<strong>Consistency</strong>), or answer them <strong>right away</strong> with whatever data is already on hand, even if it's a little out of date (<strong>Availability</strong>). You can't have perfect versions of both at once — but only for the requests actually caught in the gap, and only while the partition lasts.</p>
+        <p><strong>Try it:</strong> use the buttons below the scene to cut off a node, choose a policy while it's cut off, then heal it and watch the recovery.</p>
+      </div>
+    </details>
+    <div id="caption">
+      All three nodes are healthy and reachable. Requests round-trip
+      normally — there's no partition, so there's nothing to trade off yet.
+    </div>
+    <details class="techniques">
+      <summary>What do real systems actually do about this? ▾</summary>
+      <div class="techniques-body">
+        <p class="techniques-intro">
+          The two buttons you clicked ("Wait for it" / "Answer anyway") are
+          simplified stand-ins for real engineering techniques. Here's what's
+          actually behind each one:
+        </p>
+
+        <h4>Favoring Consistency ("Wait for it")</h4>
+        <ul>
+          <li><strong>Quorum reads &amp; writes</strong> — require agreement from a majority of replicas (not just one) before confirming anything, so a lone, out-of-sync node can never answer on its own.</li>
+          <li><strong>A single elected leader, kept in sync by a consensus protocol</strong> — route all writes through one leader, and use an algorithm like <strong>Raft</strong> (used by etcd) or the <strong>Zab</strong> protocol (used by Apache ZooKeeper) to safely re-elect a new leader if the old one disappears, without ever letting two leaders exist at once.</li>
+          <li><strong>Distributed locks</strong> — grab a lock from a majority of nodes before changing shared state, so a cut-off minority literally cannot also make changes.</li>
+          <li><strong>Just refuse the request</strong> — exactly what you saw: queue it, time it out, or return an error rather than guess. Blunt, but never wrong.</li>
+        </ul>
+
+        <h4>Favoring Availability ("Answer anyway")</h4>
+        <ul>
+          <li><strong>Sloppy quorum + hinted handoff</strong> — if the node that's supposed to hold some data is unreachable, a different reachable node temporarily accepts the write on its behalf (with a "hint" about where it really belongs), then forwards it once the original node comes back. This is literally how Amazon's Dynamo — the design behind Cassandra and DynamoDB — stays writable during a partition.</li>
+          <li><strong>Conflict resolution, once reconnected</strong> — two nodes now disagree, so something has to decide the "true" answer:
+            <ul>
+              <li><strong>Last-write-wins</strong> — keep whichever version has the newest timestamp. Simple, but can silently throw away a real update.</li>
+              <li><strong>Vector clocks</strong> — tag each version with which node changed it and when, so the system can tell "this came after that" apart from "these two changed independently and now conflict."</li>
+              <li><strong>CRDTs</strong> (Conflict-free Replicated Data Types) — data structures specifically designed so merging two divergent copies happens automatically and always lands on the same sensible answer, with nothing left to resolve by hand.</li>
+              <li><strong>App-level merging</strong> — Amazon's own shopping cart is the classic example: instead of picking one version of your cart and discarding the other, Dynamo merges the two, which is why a deleted item can occasionally reappear.</li>
+            </ul>
+          </li>
+          <li><strong>Anti-entropy</strong> — a background process that compares replicas (often using a <em>Merkle tree</em>, so it only has to compare short summaries instead of every record) and quietly repairs whatever fell out of sync.</li>
+        </ul>
+
+        <h4>Detecting the partition in the first place</h4>
+        <ul>
+          <li><strong>Failure detection is local, not global</strong> — a node simply decides "my peer stopped responding" from its own point of view. There's no referee announcing "a partition has begun," which is exactly why this simulation never shows one global switch.</li>
+          <li><strong>Gossip protocols</strong> — nodes periodically swap what they know about each other's health with a random peer, so news of a failure (or a recovery) spreads through the cluster without a central coordinator.</li>
+        </ul>
+
+        <p class="techniques-note">
+          One more thing real systems do that this simulation simplifies away:
+          the choice usually isn't made once for the whole system. Cassandra
+          and DynamoDB, for example, let you pick Consistency or Availability
+          <em>per request</em> — critical operations can wait for a quorum
+          while less critical ones answer immediately, all in the same
+          application.
+        </p>
+      </div>
+    </details>
+
+    <details class="sources">
+      <summary>For the curious: full sources &amp; precise definitions</summary>
+      <p style="padding: 0.8rem 1rem 0; margin: 0; color: var(--muted);">
+        Everything above is simplified for learning. Here's what it's based
+        on, with the more precise (and more technical) definitions:
+      </p>
+      <ul>
+        <li><strong>Brewer, "Towards Robust Distributed Systems"</strong> (PODC 2000 keynote) — origin of the conjecture, presented as a rule of thumb, not a proof.</li>
+        <li><strong>Gilbert &amp; Lynch, "Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services"</strong> (ACM SIGACT News, 2002) — the formal proof; "consistency" here means atomic/linearizable consistency, not ACID consistency.</li>
+        <li><strong>Brewer, "CAP Twelve Years Later: How the 'Rules' Have Changed"</strong> (IEEE Computer, 2012) — partition tolerance isn't optional for a real networked system; the C-vs-A choice happens per-operation, during an actual partition; recovery includes compensating for mistakes (his ATM example, reused below).</li>
+        <li><strong>Abadi, "Consistency Tradeoffs in Modern Distributed Database System Design"</strong> (PACELC, IEEE Computer, 2012) — extends CAP with the latency/consistency tradeoff that exists even without a partition.</li>
+        <li><strong>Kleppmann, "A Critique of the CAP Theorem"</strong> (arXiv:1509.05393, 2015) — "It is misleading to say that an algorithm 'provides partition tolerance'... better to say an algorithm 'assumes that partitions may occur.'" This simulation follows that framing: partitioning is never a global switch you flip on a whole system, it's something that happens to a subset of nodes.</li>
+        <li><strong>DeCandia et al., "Dynamo: Amazon's Highly Available Key-value Store"</strong> (ACM SOSP, 2007) — source for the "favoring Availability" techniques above: sloppy quorum, hinted handoff, vector clocks, Merkle-tree anti-entropy, gossip-based failure detection, and the shopping-cart merge example, all taken directly from Table 1 and Sections 4.4–4.8 of the paper.</li>
+      </ul>
+    </details>
+  </aside>
+
+  <div class="stage">
+    <div id="canvas-container"></div>
+    <div class="dock-overlay">
+      <div class="dock">
+        <button class="btn primary" id="play-toggle">&#10073;&#10073; Flow: Running</button>
+        <button class="btn" id="node-chip-0"><span class="dot" id="dot-0"></span></button>
+        <button class="btn" id="node-chip-1"><span class="dot" id="dot-1"></span></button>
+        <button class="btn" id="node-chip-2"><span class="dot" id="dot-2"></span></button>
+        <div class="policy-group" id="policy-group">
+          <button class="btn" id="policy-wait">Wait for it (consistent)</button>
+          <button class="btn" id="policy-detour">Answer anyway (available)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="min-width-notice">
+  <div class="box">
+    <h2>Widen the window</h2>
+    <p>Partition Park needs a bit more room to render — try a wider browser
+    window or a laptop/desktop screen.</p>
+  </div>
+</div>
+
+<div id="no-webgl-notice">
+  <div class="box">
+    <h2>WebGL unavailable</h2>
+    <p>This browser (or a restricted context) doesn't support WebGL, which
+    the simulation needs to render. Try a different browser, or read the
+    accurate write-up instead in <code>README.md</code>.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  if (typeof THREE === 'undefined') {
+    document.getElementById('no-webgl-notice').style.display = 'flex';
+    document.querySelector('.app').style.display = 'none';
+    return;
+  }
+
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  var container = document.getElementById('canvas-container');
+  var scene = new THREE.Scene();
+
+  var frustumSize = 15;
+  var aspect = container.clientWidth / container.clientHeight;
+  var camera = new THREE.OrthographicCamera(
+    -frustumSize * aspect / 2, frustumSize * aspect / 2,
+    frustumSize / 2, -frustumSize / 2,
+    0.1, 100
+  );
+  camera.position.set(11, 11, 11);
+  camera.lookAt(0, 0, 0);
+
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+  } catch (e) {
+    document.getElementById('no-webgl-notice').style.display = 'flex';
+    document.querySelector('.app').style.display = 'none';
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.appendChild(renderer.domElement);
+
+  function syncBackground() {
+    scene.background = new THREE.Color(cssVar('--bg') || '#F4F6F8');
+  }
+  syncBackground();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncBackground);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+  var sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(8, 14, 6);
+  scene.add(sun);
+
+  function onResize() {
+    aspect = container.clientWidth / container.clientHeight;
+    camera.left = -frustumSize * aspect / 2;
+    camera.right = frustumSize * aspect / 2;
+    camera.top = frustumSize / 2;
+    camera.bottom = -frustumSize / 2;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+  window.addEventListener('resize', onResize);
+
+  function makeLabelSprite(text, color) {
+    var c = document.createElement('canvas');
+    c.width = 128; c.height = 64;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = color || '#16202B';
+    ctx.font = 'bold 40px Archivo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 34);
+    var tex = new THREE.CanvasTexture(c);
+    var mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+    var sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.4, 0.7, 1);
+    return sprite;
+  }
+
+  function makeStaleSprite() {
+    var c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#7C5CD6';
+    ctx.beginPath();
+    ctx.arc(32, 32, 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 42px Archivo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('~', 32, 36);
+    var tex = new THREE.CanvasTexture(c);
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+    sprite.scale.set(0.4, 0.4, 1);
+    sprite.position.set(0, 0.45, 0);
+    return sprite;
+  }
+
+  function flatMat(hex) {
+    return new THREE.MeshStandardMaterial({ color: hex, flatShading: true });
+  }
+
+  // ---- ground ----
+  var ground = new THREE.Mesh(
+    new THREE.CylinderGeometry(7.2, 7.2, 0.4, 8),
+    flatMat(0x4c7a5e)
+  );
+  ground.position.y = -0.2;
+  scene.add(ground);
+
+  // ---- client station ----
+  var client = new THREE.Group();
+  var clientBody = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 1.5), flatMat(0xEDEDED));
+  clientBody.position.y = 0.5;
+  var clientRoof = new THREE.Mesh(new THREE.ConeGeometry(1.15, 0.9, 4), flatMat(0xD9642B));
+  clientRoof.position.y = 1.45;
+  clientRoof.rotation.y = Math.PI / 4;
+  client.add(clientBody, clientRoof);
+  client.add(makeLabelSprite('Client', '#16202B'));
+  client.children[client.children.length - 1].position.set(0, 2.3, 0);
+  scene.add(client);
+
+  // ---- node stations ----
+  var NODE_COUNT = 3;
+  var NODE_RADIUS = 5;
+  var nodeAngles = [Math.PI / 2, Math.PI / 2 + (2 * Math.PI / 3), Math.PI / 2 + (4 * Math.PI / 3)];
+  var nodeRoofColors = [0x6AAEF0, 0x7FD9C4, 0xE0A526];
+  var nodeLabels = ['A', 'B', 'C'];
+  var STATUS_COLOR = {
+    normal: 0x2E7D53,
+    'minority-partitioned': 0xB5790A,
+    'serving-stale': 0x7C5CD6,
+    reconciling: 0x2563AA
+  };
+
+  var nodes = [];
+  for (var i = 0; i < NODE_COUNT; i++) {
+    var angle = nodeAngles[i];
+    var nx = Math.cos(angle) * NODE_RADIUS;
+    var nz = Math.sin(angle) * NODE_RADIUS;
+
+    var group = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 1.1), flatMat(0xDDE3E6));
+    body.position.y = 0.4;
+    var roof = new THREE.Mesh(new THREE.ConeGeometry(0.95, 0.75, 4), flatMat(nodeRoofColors[i]));
+    roof.position.y = 1.17;
+    roof.rotation.y = Math.PI / 4;
+
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 6), flatMat(0x8891A0));
+    pole.position.y = 1.5 + 0.55;
+    var flag = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.05), flatMat(STATUS_COLOR.normal));
+    flag.position.set(0.2, 1.9 + 0.55, 0);
+
+    var label = makeLabelSprite('Node ' + nodeLabels[i], '#16202B');
+    label.position.set(0, 2.9, 0);
+
+    group.add(body, roof, pole, flag, label);
+    group.position.set(nx, 0, nz);
+    scene.add(group);
+
+    nodes.push({ id: i, status: 'normal', flag: flag, group: group });
+  }
+
+  // ---- tracks ----
+  function buildCurve(nodeIdx) {
+    var angle = nodeAngles[nodeIdx];
+    var cos = Math.cos(angle), sin = Math.sin(angle);
+    var p0 = new THREE.Vector3(cos * 1.1, 0.55, sin * 1.1);
+    var p3 = new THREE.Vector3(cos * (NODE_RADIUS - 0.9), 0.5, sin * (NODE_RADIUS - 0.9));
+    var p1 = new THREE.Vector3(
+      p0.x + (p3.x - p0.x) * 0.35, 1.9,
+      p0.z + (p3.z - p0.z) * 0.35
+    );
+    var p2 = new THREE.Vector3(
+      p0.x + (p3.x - p0.x) * 0.68, 1.4,
+      p0.z + (p3.z - p0.z) * 0.68
+    );
+    return new THREE.CatmullRomCurve3([p0, p1, p2, p3]);
+  }
+
+  function tubeFromCurve(curve, segments) {
+    return new THREE.Mesh(
+      new THREE.TubeGeometry(curve, segments || 32, 0.12, 6, false),
+      flatMat(0x8891A0)
+    );
+  }
+
+  function subCurve(curve, tStart, tEnd, samples) {
+    var pts = [];
+    for (var s = 0; s <= samples; s++) {
+      var t = tStart + (tEnd - tStart) * (s / samples);
+      pts.push(curve.getPointAt(Math.max(0, Math.min(1, t))));
+    }
+    return new THREE.CatmullRomCurve3(pts);
+  }
+
+  var tracks = [];
+  for (var t = 0; t < NODE_COUNT; t++) {
+    var curve = buildCurve(t);
+    var fullMesh = tubeFromCurve(curve, 40);
+    scene.add(fullMesh);
+    tracks.push({
+      id: t,
+      nodeId: t,
+      curve: curve,
+      gapT: 0.5,
+      hasGap: false,
+      fullMesh: fullMesh,
+      gapMeshes: null,
+      liftGroup: null,
+      liftProgress: 0
+    });
+  }
+
+  // ---- cart pool ----
+  var cartMat = flatMat(0xD9642B);
+  var cartNoseMat = flatMat(0xB5501F);
+
+  function makeCartMesh() {
+    var group = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 0.5), cartMat);
+    var nose = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.3, 4), cartNoseMat);
+    nose.rotation.x = -Math.PI / 2;
+    nose.position.z = -0.35;
+    group.add(body, nose);
+    return group;
+  }
+
+  var carts = [];
+  var nextCartId = 0;
+  var spawnTimer = 0;
+  var spawnEvery = 1.4;
+  var spawnCursor = 0;
+  var speed = 0.35;
+
+  function queueDepthOnTrack(trackId) {
+    var n = 0;
+    for (var i = 0; i < carts.length; i++) {
+      if (carts[i].trackId === trackId && carts[i].cartState === 'queued') n++;
+    }
+    return n;
+  }
+
+  function spawnCart() {
+    var trackId = spawnCursor % NODE_COUNT;
+    spawnCursor++;
+    var track = tracks[trackId];
+    var mesh = makeCartMesh();
+    scene.add(mesh);
+    carts.push({
+      id: nextCartId++,
+      trackId: trackId,
+      t: 0,
+      dir: 1,
+      cartState: 'moving',
+      queueIndex: -1,
+      dwell: 0,
+      mesh: mesh,
+      stale: false,
+      staleSprite: null
+    });
+  }
+
+  function placeCartOnCurve(cart, track, t) {
+    var p = track.curve.getPointAt(Math.max(0, Math.min(1, t)));
+    cart.mesh.position.copy(p);
+    var tangent = track.curve.getTangentAt(Math.max(0.001, Math.min(0.999, t)));
+    var lookTarget = p.clone().add(cart.dir > 0 ? tangent : tangent.clone().negate());
+    cart.mesh.lookAt(lookTarget);
+  }
+
+  function markStale(cart) {
+    if (cart.stale) return;
+    cart.stale = true;
+    var s = makeStaleSprite();
+    cart.mesh.add(s);
+    cart.staleSprite = s;
+  }
+
+  function findPartitionByTrack(trackId) {
+    for (var i = 0; i < state.partitions.length; i++) {
+      if (state.partitions[i].trackId === trackId) return state.partitions[i];
+    }
+    return null;
+  }
+
+  function advanceCart(cart, dt) {
+    var track = tracks[cart.trackId];
+
+    if (cart.cartState === 'queued') {
+      if (!track.hasGap) {
+        cart.cartState = 'moving';
+        cart.t = track.gapT;
+      } else {
+        var p = findPartitionByTrack(track.id);
+        if (p && p.policy === 'detour') {
+          markStale(cart);
+          cart.t = track.gapT + 0.04;
+          cart.cartState = 'moving';
+        }
+      }
+      return;
+    }
+
+    if (cart.cartState === 'dwell') {
+      cart.dwell += dt;
+      if (cart.dwell > 0.3) {
+        cart.cartState = 'moving';
+        cart.dir = -1;
+      }
+      return;
+    }
+
+    if (cart.cartState !== 'moving') return;
+
+    if (cart.dir > 0) {
+      var newT = cart.t + speed * dt;
+      if (track.hasGap && cart.t < track.gapT && newT >= track.gapT) {
+        var partition = findPartitionByTrack(track.id);
+        var policy = partition ? partition.policy : null;
+        if (policy === 'detour') {
+          markStale(cart);
+          newT = track.gapT + 0.04;
+        } else {
+          cart.cartState = 'queued';
+          cart.t = track.gapT;
+          cart.queueIndex = queueDepthOnTrack(track.id);
+          var basePoint = track.curve.getPointAt(track.gapT);
+          var tan = track.curve.getTangentAt(track.gapT).normalize();
+          var offset = tan.clone().multiplyScalar(-0.32 * (cart.queueIndex + 1));
+          cart.mesh.position.copy(basePoint.clone().add(offset));
+          cart.mesh.lookAt(basePoint);
+          return;
+        }
+      }
+      cart.t = Math.min(1, newT);
+      placeCartOnCurve(cart, track, cart.t);
+      if (cart.t >= 1) { cart.cartState = 'dwell'; cart.dwell = 0; }
+    } else {
+      cart.t -= speed * dt;
+      if (cart.t <= 0) {
+        cart.remove = true;
+        return;
+      }
+      placeCartOnCurve(cart, track, cart.t);
+    }
+  }
+
+  function reflowQueue(trackId) {
+    var track = tracks[trackId];
+    var basePoint = track.curve.getPointAt(track.gapT);
+    var tan = track.curve.getTangentAt(track.gapT).normalize();
+    var idx = 0;
+    for (var i = 0; i < carts.length; i++) {
+      if (carts[i].trackId === trackId && carts[i].cartState === 'queued') {
+        carts[i].queueIndex = idx;
+        var offset = tan.clone().multiplyScalar(-0.32 * (idx + 1));
+        carts[i].mesh.position.copy(basePoint.clone().add(offset));
+        carts[i].mesh.lookAt(basePoint);
+        idx++;
+      }
+    }
+  }
+
+  // ---- gap open/close tween ----
+  function openGap(track) {
+    track.hasGap = true;
+    track.fullMesh.visible = false;
+    var before = subCurve(track.curve, 0, track.gapT - 0.035, 16);
+    var after = subCurve(track.curve, track.gapT + 0.035, 1, 16);
+    var beforeMesh = tubeFromCurve(before, 20);
+    var afterMesh = tubeFromCurve(after, 20);
+    var liftGroup = new THREE.Group();
+    liftGroup.add(afterMesh);
+    scene.add(beforeMesh);
+    scene.add(liftGroup);
+    track.gapMeshes = { before: beforeMesh, afterGroup: liftGroup };
+    track.liftProgress = 0;
+    track.lifting = 'up';
+  }
+
+  function closeGap(track) {
+    track.lifting = 'down';
+  }
+
+  function finalizeCloseGap(track) {
+    scene.remove(track.gapMeshes.before);
+    scene.remove(track.gapMeshes.afterGroup);
+    track.gapMeshes.before.geometry.dispose();
+    track.gapMeshes.before.material.dispose();
+    track.gapMeshes.afterGroup.children[0].geometry.dispose();
+    track.gapMeshes.afterGroup.children[0].material.dispose();
+    track.gapMeshes = null;
+    track.hasGap = false;
+    track.fullMesh.visible = true;
+    track.lifting = null;
+  }
+
+  function updateGapTweens(dt) {
+    tracks.forEach(function (track) {
+      if (!track.lifting) return;
+      var speedT = dt / 0.4;
+      if (track.lifting === 'up') {
+        track.liftProgress = Math.min(1, track.liftProgress + speedT);
+        track.gapMeshes.afterGroup.position.y = track.liftProgress * 0.9;
+        if (track.liftProgress >= 1) track.lifting = null;
+      } else if (track.lifting === 'down') {
+        track.liftProgress = Math.max(0, track.liftProgress - speedT);
+        track.gapMeshes.afterGroup.position.y = track.liftProgress * 0.9;
+        if (track.liftProgress <= 0) finalizeCloseGap(track);
+      }
+    });
+  }
+
+  // ---- state ----
+  var state = {
+    playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    partitions: [],
+    reconciling: []
+  };
+
+  var caption = document.getElementById('caption');
+  function setCaption(html) { caption.innerHTML = html; }
+
+  function nodeName(i) { return 'Node ' + nodeLabels[i]; }
+
+  function setNodeStatus(nodeId, status) {
+    nodes[nodeId].status = status;
+    nodes[nodeId].flag.material.color.set(STATUS_COLOR[status]);
+    updateChipUI();
+  }
+
+  function startPartition(nodeId) {
+    if (state.partitions.length > 0) return;
+    var partition = { id: 'p' + Date.now(), isolatedNodeId: nodeId, policy: null, trackId: nodeId };
+    state.partitions.push(partition);
+    setNodeStatus(nodeId, 'minority-partitioned');
+    openGap(tracks[nodeId]);
+    setCaption(
+      'You just cut <strong>' + nodeName(nodeId) + '</strong> off from the rest of the network — ' +
+      'that\'s a <strong>partition</strong> (the "P" card above). Notice the other two nodes ' +
+      'don\'t even react: a partition isn\'t a mode the whole system enters, it\'s something that ' +
+      'happens between specific machines. Any cart already on its way to ' + nodeName(nodeId) +
+      ' is about to hit the gap in the track — pick a policy below for what should happen to it.'
+    );
+    updatePolicyUI();
+  }
+
+  function setPolicy(policy) {
+    if (state.partitions.length === 0) return;
+    var partition = state.partitions[0];
+    partition.policy = policy;
+    if (policy === 'detour') {
+      setNodeStatus(partition.isolatedNodeId, 'serving-stale');
+      setCaption(
+        'You picked <strong>Availability</strong> (the "A" card). Carts now jump the gap and get answered ' +
+        'immediately from whatever data <strong>' + nodeName(partition.isolatedNodeId) + '</strong> already ' +
+        'has (marked with a <strong>~</strong>) — fast, but that data might be out of date until the node ' +
+        'reconnects and catches up.'
+      );
+    } else {
+      setNodeStatus(partition.isolatedNodeId, 'minority-partitioned');
+      setCaption(
+        'You picked <strong>Consistency</strong> (the "C" card). Carts heading to <strong>' +
+        nodeName(partition.isolatedNodeId) + '</strong> now queue up and wait right at the gap instead of ' +
+        'getting a possibly-wrong answer — safe, but those requests are stuck until the node comes back.'
+      );
+    }
+    reflowQueue(partition.trackId);
+    updatePolicyUI();
+  }
+
+  function healPartition() {
+    if (state.partitions.length === 0) return;
+    var partition = state.partitions.shift();
+    closeGap(tracks[partition.trackId]);
+    setNodeStatus(partition.isolatedNodeId, 'reconciling');
+    state.reconciling.push({ nodeId: partition.isolatedNodeId, progress: 0 });
+    setCaption(
+      'Network restored — but reconnecting isn\'t instant. <strong>' + nodeName(partition.isolatedNodeId) +
+      '</strong> is now <strong>reconciling</strong>: merging whatever changed on both sides while it was ' +
+      'cut off, and fixing anything that turned out wrong. A real-world example: an ATM that lets you ' +
+      'withdraw cash while offline (favoring Availability) settles up afterward, even charging an ' +
+      'overdraft fee if needed — instead of just refusing the withdrawal in the first place.'
+    );
+    updatePolicyUI();
+  }
+
+  function updateReconciling(dt) {
+    for (var i = state.reconciling.length - 1; i >= 0; i--) {
+      var r = state.reconciling[i];
+      r.progress += dt / 1.6;
+      if (r.progress >= 1) {
+        setNodeStatus(r.nodeId, 'normal');
+        state.reconciling.splice(i, 1);
+        if (state.partitions.length === 0 && state.reconciling.length === 0) {
+          setCaption('Recovered. All three nodes are back in sync and reachable — no tradeoff to make right now.');
+        }
+      }
+    }
+  }
+
+  function togglePlay() {
+    state.playing = !state.playing;
+    updatePlayUI();
+  }
+
+  // ---- UI wiring ----
+  var playBtn = document.getElementById('play-toggle');
+  function updatePlayUI() {
+    playBtn.textContent = state.playing ? '⏸ Flow: Running' : '▶ Flow: Paused';
+  }
+  playBtn.addEventListener('click', togglePlay);
+  updatePlayUI();
+
+  var chipEls = [document.getElementById('node-chip-0'), document.getElementById('node-chip-1'), document.getElementById('node-chip-2')];
+  var dotEls = [document.getElementById('dot-0'), document.getElementById('dot-1'), document.getElementById('dot-2')];
+  var DOT_CLASS = { normal: '', 'minority-partitioned': 'warn', 'serving-stale': 'stale', reconciling: 'info' };
+
+  function updateChipUI() {
+    for (var i = 0; i < NODE_COUNT; i++) {
+      var status = nodes[i].status;
+      dotEls[i].className = 'dot ' + (DOT_CLASS[status] || '');
+      var label = 'Node ' + nodeLabels[i];
+      var action = status === 'normal' ? ' — Cut off' :
+        status === 'reconciling' ? ' — Reconciling…' : ' — Heal';
+      chipEls[i].lastChild.textContent = label + action;
+      chipEls[i].disabled = status === 'reconciling' ||
+        (status === 'normal' && state.partitions.length > 0);
+    }
+  }
+  chipEls.forEach(function (el, i) {
+    var span = document.createElement('span');
+    span.textContent = ' Node ' + nodeLabels[i];
+    el.appendChild(span);
+  });
+
+  chipEls.forEach(function (el, i) {
+    el.addEventListener('click', function (idx) {
+      return function () {
+        var status = nodes[idx].status;
+        if (status === 'normal') startPartition(idx);
+        else if (status === 'minority-partitioned' || status === 'serving-stale') healPartition();
+      };
+    }(i));
+  });
+
+  var policyGroup = document.getElementById('policy-group');
+  var policyWaitBtn = document.getElementById('policy-wait');
+  var policyDetourBtn = document.getElementById('policy-detour');
+  var conceptC = document.getElementById('concept-c');
+  var conceptA = document.getElementById('concept-a');
+  var conceptP = document.getElementById('concept-p');
+
+  function updateConceptChips() {
+    var active = state.partitions.length > 0;
+    var policy = active ? state.partitions[0].policy : null;
+    conceptP.classList.toggle('active', active);
+    conceptC.classList.toggle('active', policy === 'wait');
+    conceptA.classList.toggle('active', policy === 'detour');
+  }
+
+  function updatePolicyUI() {
+    var active = state.partitions.length > 0;
+    policyGroup.classList.toggle('visible', active);
+    updateConceptChips();
+    if (!active) return;
+    var policy = state.partitions[0].policy;
+    policyWaitBtn.classList.toggle('selected', policy === 'wait');
+    policyDetourBtn.classList.toggle('selected', policy === 'detour');
+  }
+  policyWaitBtn.addEventListener('click', function () { setPolicy('wait'); });
+  policyDetourBtn.addEventListener('click', function () { setPolicy('detour'); });
+
+  updateChipUI();
+  updatePolicyUI();
+
+  // ---- main loop ----
+  function step(dt) {
+    if (state.playing) {
+      spawnTimer += dt;
+      if (spawnTimer >= spawnEvery) { spawnTimer = 0; spawnCart(); }
+      for (var i = carts.length - 1; i >= 0; i--) {
+        advanceCart(carts[i], dt);
+        if (carts[i].remove) {
+          scene.remove(carts[i].mesh);
+          carts.splice(i, 1);
+        }
+      }
+      updateReconciling(dt);
+    }
+    updateGapTweens(dt);
+    renderer.render(scene, camera);
+  }
+
+  window.__partitionPark = {
+    state: state, nodes: nodes, tracks: tracks, carts: carts,
+    startPartition: startPartition, setPolicy: setPolicy, healPartition: healPartition,
+    togglePlay: togglePlay,
+    // manual frame-stepping hook, useful for debugging in devtools when the
+    // tab is backgrounded and the browser throttles requestAnimationFrame
+    tick: function (dtSeconds, steps) {
+      for (var s = 0; s < (steps || 1); s++) step(dtSeconds || 0.05);
+    }
+  };
+
+  var lastTime = performance.now();
+  function animate(now) {
+    var dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    step(dt);
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>
