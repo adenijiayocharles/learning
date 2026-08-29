@@ -12,6 +12,15 @@ Restart policies respond when a container exits or the daemon restarts, with
 different behavior for manual stops. Application retries are still important
 because dependencies can fail after startup.
 
+## Command and flag guide
+
+- `config --quiet` validates the Compose model without printing it.
+- `docker compose ps -q SERVICE` prints only that service container's ID. The
+  host shell's `$(...)` substitutes that ID into the surrounding `docker inspect`
+  command.
+- `docker compose stop SERVICE` stops a service container without removing it;
+  `start SERVICE` starts that same container again.
+
 ## Hands-on
 
 Run from `docker/09-reliable-compose`.

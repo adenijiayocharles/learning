@@ -10,6 +10,18 @@ source or configuration files, but couples the container to the host layout.
 Prefer the explicit `--mount` syntax in learning material. Bind mounts are
 writable by default, so use `readonly` when the container only needs to read.
 
+## Command and flag guide
+
+- `docker volume create NAME` creates Docker-managed persistent storage;
+  `docker volume inspect NAME` shows its metadata and host location, and
+  `docker volume rm NAME` deletes it when no container uses it.
+- `--mount` attaches storage to a container. Its comma-separated fields describe
+  the mount: `type=volume` uses a named volume, `type=bind` uses a host path,
+  `src` is the source, `dst` is the container path, and `readonly` prevents
+  writes through the mount.
+- `$PWD` is expanded by the host shell to the current directory before Docker
+  receives the bind-mount source path.
+
 ## Hands-on
 
 1. Demonstrate ephemeral container data:

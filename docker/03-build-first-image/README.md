@@ -12,6 +12,14 @@ that context can be copied. `.dockerignore` excludes files that should not be
 sent to the builder, improving performance and reducing the risk of including
 secrets.
 
+## Command and flag guide
+
+- `docker build CONTEXT` builds an image from a Dockerfile and the supplied
+  context; `-t NAME:TAG` gives the result a repository name and tag.
+- The final `.` means “use the current directory as the build context.”
+- This module reuses `docker image ls`, `docker run`, `-d`, `--name`, `-p`,
+  `docker image inspect`, `docker stop`, and `docker rm` from Modules 1–2.
+
 ## Hands-on
 
 All commands run from the shared application directory:

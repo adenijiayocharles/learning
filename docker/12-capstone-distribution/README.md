@@ -12,6 +12,17 @@ registry. Cleanup should target known course resources. Broad commands such as
 `docker system prune` can delete unrelated caches and stopped resources and are
 intentionally not part of this course.
 
+## Command and flag guide
+
+- `docker compose up --wait` waits until services are running or healthy;
+  `--force-recreate` replaces containers even when their configuration and
+  image appear unchanged.
+- `docker image save IMAGE -o FILE` writes an image archive to a file;
+  `docker image load -i FILE` reads an image archive from a file.
+- `docker login` authenticates to a registry, `docker tag SOURCE TARGET` adds
+  another name to an image, and `docker push IMAGE` uploads it to a registry.
+- `docker image rm IMAGE` removes the named image from the local image store.
+
 ## Hands-on
 
 1. From `docker/12-capstone-distribution`, review `compose-starter.yaml`. Fill

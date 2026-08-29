@@ -12,6 +12,17 @@ stop signals and its exit ends the container. Exec-form JSON commands avoid an
 extra shell and generally forward signals more predictably than shell-form
 commands.
 
+## Command and flag guide
+
+- `-e NAME=VALUE` sets one environment variable in the new container;
+  `--env-file PATH` loads multiple variables from a file.
+- `docker top CONTAINER` lists processes running inside a container.
+- `docker rm -f CONTAINER` force-removes a running container (stopping it
+  first); use it deliberately because the process gets less time to shut down.
+- `docker port CONTAINER` displays the container-to-host port mappings.
+- `{{json ...}}` inside `--format` renders the selected value as JSON; it is part
+  of the formatting template, not another command-line flag.
+
 ## Hands-on
 
 Run from the repository root after building `visit-counter:v1`.

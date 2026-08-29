@@ -11,6 +11,23 @@ The main container process determines its lifecycle. When PID 1 exits, the
 container stops. Logs capture the process's standard output and error streams;
 `exec` starts an additional process inside an already-running container.
 
+## Command and flag guide
+
+- `-d` runs the container in the background (detached mode), while `--name NAME`
+  assigns a memorable name instead of a generated one.
+- `-p HOST_IP:HOST_PORT:CONTAINER_PORT` publishes a container port through the
+  host. Here, only `127.0.0.1:8080` forwards to port `80` in the container.
+- `docker ps` lists running containers; `-a` includes stopped containers and
+  `--filter name=VALUE` narrows the results by name.
+- `docker logs CONTAINER` shows the main process's output; `docker inspect`
+  shows detailed JSON configuration and state.
+- `docker exec CONTAINER COMMAND` runs an extra command in a running container.
+- `docker stop` requests a graceful stop, `docker start` restarts an existing
+  stopped container, and `docker rm` deletes a stopped container.
+- `--format TEMPLATE` selects fields from inspect output using a Go template.
+- In `sh -c '...'`, `-c` belongs to the shell, not Docker: it tells `sh` to run
+  the following string as a command.
+
 ## Hands-on
 
 1. Start an Nginx container in the background:

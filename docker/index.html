@@ -172,6 +172,56 @@
     transition: width 0.3s ease;
   }
 
+  .reference-control {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .reference-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 0.65rem 0.75rem;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-align: left;
+  }
+
+  .reference-toggle:hover { border-color: var(--accent); }
+  .reference-toggle:disabled { cursor: not-allowed; opacity: 0.5; }
+
+  .switch-track {
+    width: 34px;
+    height: 18px;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--line);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+
+  .switch-thumb {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--muted);
+    transition: transform 0.2s ease;
+  }
+
+  .reference-toggle[aria-pressed="true"] .switch-track { background: var(--accent); }
+  .reference-toggle[aria-pressed="true"] .switch-thumb {
+    border-color: var(--accent);
+    transform: translateX(16px);
+  }
+
   nav.module-nav {
     padding: 0.75rem 0.75rem 1.5rem;
     display: flex;
@@ -245,6 +295,43 @@
     min-width: 0;
     height: 100vh;
     overflow-y: auto;
+  }
+
+  .command-guide-panel {
+    display: none;
+    position: fixed;
+    z-index: 12;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: min(350px, calc(100vw - 3rem));
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--accent);
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.2rem 1.2rem;
+  }
+
+  .command-guide-panel.visible { display: block; }
+  .command-guide-panel h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    margin: 0 0 0.85rem;
+  }
+  .command-guide-panel ul { margin: 0; padding-left: 1.2rem; }
+  .command-guide-panel li { margin-bottom: 0.65rem; }
+  .command-guide-panel li:last-child { margin-bottom: 0; }
+  .command-guide-panel code {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 0.08em 0.3em;
+    color: var(--ink);
+  }
+
+  @media (min-width: 1200px) {
+    .content-wrap.guide-open { padding-right: 380px; }
   }
 
   .content {
@@ -492,10 +579,17 @@
     }
     .backdrop.open { display: block; }
     .content { padding-top: 2.5rem; }
+    .command-guide-panel {
+      top: auto;
+      right: 0.75rem;
+      bottom: 0.75rem;
+      width: calc(100vw - 1.5rem);
+      max-height: min(55vh, 520px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .sidebar, .progress-fill { transition: none; }
+    .sidebar, .progress-fill, .switch-track, .switch-thumb { transition: none; }
   }
 </style>
 </head>
@@ -525,6 +619,12 @@
       </div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
+    <div class="reference-control">
+      <button class="reference-toggle" id="reference-toggle" type="button" aria-pressed="true">
+        <span>Command guide</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+      </button>
+    </div>
     <nav class="module-nav" id="module-nav"></nav>
   </aside>
 
@@ -535,6 +635,7 @@
     </div>
     <main class="content" id="content"></main>
   </div>
+  <aside class="command-guide-panel" id="command-guide-panel" aria-label="Command and flag guide"></aside>
 </div>
 
 <script type="text/markdown" id="md-00">
@@ -607,6 +708,20 @@ Docker daemon, which manages images, containers, networks, and volumes. The
 client and daemon may be on different machines, so commands such as bind mounts
 refer to paths visible to the daemon.
 
+## Command and flag guide
+
+- `docker version` reports client and daemon versions; `docker info` reports the
+  daemon's wider configuration and current resource counts.
+- `docker run IMAGE [COMMAND]` creates and starts a new container from an image.
+- `--rm` automatically deletes that container when it stops. It does not delete
+  the image.
+- `docker image ls [IMAGE]` lists local images, optionally filtered by name.
+- `docker image inspect IMAGE` prints detailed image metadata as JSON.
+- `-i` keeps standard input open and `-t` allocates a terminal. The combined
+  `-it` makes an interactive shell behave like a normal terminal.
+- In `alpine:3.22`, `alpine` is the image repository and `3.22` is its tag;
+  the trailing `sh` replaces the image's default command with a shell.
+
 ## Hands-on
 
 1. Confirm both sides are available:
@@ -670,6 +785,23 @@ writable layer and metadata. `docker ps` lists running containers;
 The main container process determines its lifecycle. When PID 1 exits, the
 container stops. Logs capture the process's standard output and error streams;
 `exec` starts an additional process inside an already-running container.
+
+## Command and flag guide
+
+- `-d` runs the container in the background (detached mode), while `--name NAME`
+  assigns a memorable name instead of a generated one.
+- `-p HOST_IP:HOST_PORT:CONTAINER_PORT` publishes a container port through the
+  host. Here, only `127.0.0.1:8080` forwards to port `80` in the container.
+- `docker ps` lists running containers; `-a` includes stopped containers and
+  `--filter name=VALUE` narrows the results by name.
+- `docker logs CONTAINER` shows the main process's output; `docker inspect`
+  shows detailed JSON configuration and state.
+- `docker exec CONTAINER COMMAND` runs an extra command in a running container.
+- `docker stop` requests a graceful stop, `docker start` restarts an existing
+  stopped container, and `docker rm` deletes a stopped container.
+- `--format TEMPLATE` selects fields from inspect output using a Go template.
+- In `sh -c '...'`, `-c` belongs to the shell, not Docker: it tells `sh` to run
+  the following string as a command.
 
 ## Hands-on
 
@@ -741,6 +873,14 @@ that context can be copied. `.dockerignore` excludes files that should not be
 sent to the builder, improving performance and reducing the risk of including
 secrets.
 
+## Command and flag guide
+
+- `docker build CONTEXT` builds an image from a Dockerfile and the supplied
+  context; `-t NAME:TAG` gives the result a repository name and tag.
+- The final `.` means “use the current directory as the build context.”
+- This module reuses `docker image ls`, `docker run`, `-d`, `--name`, `-p`,
+  `docker image inspect`, `docker stop`, and `docker rm` from Modules 1–2.
+
 ## Hands-on
 
 All commands run from the shared application directory:
@@ -803,6 +943,17 @@ not reinstall every dependency.
 Tags such as `visit-counter:v1` are mutable names pointing at image content;
 they are not immutable copies. Rebuilding with the same tag moves that tag to
 the new result.
+
+## Command and flag guide
+
+- `--progress=plain` prints the full build-step output instead of the compact
+  interactive display, making cache decisions easier to see.
+- `docker image history IMAGE` shows the instructions and layers that produced
+  an image.
+- `--no-cache` prevents reuse of cached build steps. It is different from
+  `--pull`, which checks for a newer base image.
+- This module reuses `docker build`, `-t`, and inspect's `--format` from earlier
+  modules.
 
 ## Hands-on
 
@@ -867,6 +1018,17 @@ The image's `CMD` starts `python app.py` as PID 1. PID 1 receives container
 stop signals and its exit ends the container. Exec-form JSON commands avoid an
 extra shell and generally forward signals more predictably than shell-form
 commands.
+
+## Command and flag guide
+
+- `-e NAME=VALUE` sets one environment variable in the new container;
+  `--env-file PATH` loads multiple variables from a file.
+- `docker top CONTAINER` lists processes running inside a container.
+- `docker rm -f CONTAINER` force-removes a running container (stopping it
+  first); use it deliberately because the process gets less time to shut down.
+- `docker port CONTAINER` displays the container-to-host port mappings.
+- `{{json ...}}` inside `--format` renders the selected value as JSON; it is part
+  of the formatting template, not another command-line flag.
 
 ## Hands-on
 
@@ -938,6 +1100,18 @@ source or configuration files, but couples the container to the host layout.
 
 Prefer the explicit `--mount` syntax in learning material. Bind mounts are
 writable by default, so use `readonly` when the container only needs to read.
+
+## Command and flag guide
+
+- `docker volume create NAME` creates Docker-managed persistent storage;
+  `docker volume inspect NAME` shows its metadata and host location, and
+  `docker volume rm NAME` deletes it when no container uses it.
+- `--mount` attaches storage to a container. Its comma-separated fields describe
+  the mount: `type=volume` uses a named volume, `type=bind` uses a host path,
+  `src` is the source, `dst` is the container path, and `readonly` prevents
+  writes through the mount.
+- `$PWD` is expanded by the host shell to the current directory before Docker
+  receives the bind-mount source path.
 
 ## Hands-on
 
@@ -1017,6 +1191,15 @@ recreated.
 The visit counter can use Redis when `REDIS_HOST` is set. Redis does not need a
 host-published port because only the web container needs to reach it.
 
+## Command and flag guide
+
+- `docker network create NAME` creates a user-defined network;
+  `docker network inspect NAME` shows its configuration and attached containers,
+  and `docker network rm NAME` deletes an unused network.
+- `--network NAME` connects the new container to that network, where containers
+  can resolve one another by name.
+- `docker exec` is reused here to run a DNS check inside the web container.
+
 ## Hands-on
 
 1. Create a network and start Redis:
@@ -1092,6 +1275,20 @@ is discoverable by its service name.
 A Dockerfile defines how to build an image. A Compose file defines how one or
 more containers run. These files complement rather than replace each other.
 
+## Command and flag guide
+
+- `docker compose -f FILE` runs Compose using the specified YAML file instead
+  of discovering the default file; the option applies to the Compose command
+  that follows it.
+- `config` parses, validates, and prints the resolved Compose model.
+- `up` creates and starts the project's services; `-d` leaves them running in
+  the background and `--build` builds images before starting.
+- `ps` shows project containers, `logs` shows their output, and
+  `exec SERVICE COMMAND` runs a command in a running service container.
+- `docker network ls` and `docker volume ls` list Docker networks and volumes.
+- `down` stops and removes the project's containers and networks;
+  `--volumes` also removes its named volumes and their stored data.
+
 ## Hands-on
 
 Run from `docker/08-compose-fundamentals`.
@@ -1165,6 +1362,15 @@ Restart policies respond when a container exits or the daemon restarts, with
 different behavior for manual stops. Application retries are still important
 because dependencies can fail after startup.
 
+## Command and flag guide
+
+- `config --quiet` validates the Compose model without printing it.
+- `docker compose ps -q SERVICE` prints only that service container's ID. The
+  host shell's `$(...)` substitutes that ID into the surrounding `docker inspect`
+  command.
+- `docker compose stop SERVICE` stops a service container without removing it;
+  `start SERVICE` starts that same container again.
+
 ## Hands-on
 
 Run from `docker/09-reliable-compose`.
@@ -1232,6 +1438,15 @@ Run application processes as a non-root user unless they genuinely need root.
 Keep the build context small, avoid unnecessary packages, rebuild regularly,
 and understand that tags are mutable. Pinning a base image digest maximizes
 reproducibility, but creates an explicit update responsibility.
+
+## Command and flag guide
+
+- `docker build --check` evaluates the Dockerfile with build checks and reports
+  issues without performing a normal image build.
+- `-f PATH` selects a Dockerfile whose name or location differs from the default
+  `Dockerfile` in the build context.
+- The remaining Docker commands and flags in this module were introduced in
+  Modules 1–5.
 
 ## Hands-on
 
@@ -1304,6 +1519,15 @@ Use a consistent debugging loop: inspect project status, read logs, inspect the
 resolved Compose model, inspect container state and networks, then test from
 the narrowest relevant boundary. Avoid deleting resources before collecting
 evidence.
+
+## Command and flag guide
+
+- `docker compose port SERVICE CONTAINER_PORT` prints the host address mapped to
+  a service's container port.
+- `docker stats` streams live CPU, memory, network, and I/O usage for containers;
+  `--no-stream` takes one snapshot and exits.
+- This module reuses Compose's `-f`, `config`, `--quiet`, `up`, `-d`, `--build`,
+  `ps`, `logs`, `exec`, and `down` from Modules 8–9.
 
 ## Hands-on
 
@@ -1382,6 +1606,17 @@ and repository, so that exercise is optional.
 registry. Cleanup should target known course resources. Broad commands such as
 `docker system prune` can delete unrelated caches and stopped resources and are
 intentionally not part of this course.
+
+## Command and flag guide
+
+- `docker compose up --wait` waits until services are running or healthy;
+  `--force-recreate` replaces containers even when their configuration and
+  image appear unchanged.
+- `docker image save IMAGE -o FILE` writes an image archive to a file;
+  `docker image load -i FILE` reads an image archive from a file.
+- `docker login` authenticates to a registry, `docker tag SOURCE TARGET` adds
+  another name to an image, and `docker push IMAGE` uploads it to a registry.
+- `docker image rm IMAGE` removes the named image from the local image store.
 
 ## Hands-on
 
@@ -1468,6 +1703,7 @@ var MODULES = [
 
   var PROGRESS_KEY = 'docker-field-manual-progress';
   var LAST_KEY = 'docker-field-manual-last';
+  var GUIDE_KEY = 'docker-field-manual-command-guide';
 
   function loadProgress() {
     try {
@@ -1488,7 +1724,16 @@ var MODULES = [
     try { return localStorage.getItem(LAST_KEY); } catch (e) { return null; }
   }
 
+  function loadGuidePreference() {
+    try { return localStorage.getItem(GUIDE_KEY) !== 'off'; } catch (e) { return true; }
+  }
+
+  function saveGuidePreference() {
+    try { localStorage.setItem(GUIDE_KEY, guideVisible ? 'on' : 'off'); } catch (e) {}
+  }
+
   var completed = loadProgress();
+  var guideVisible = loadGuidePreference();
 
   function isDone(id) { return completed.indexOf(id) !== -1; }
 
@@ -1617,6 +1862,43 @@ var MODULES = [
     });
   }
 
+  function setupCommandGuide(container, id) {
+    var panel = document.getElementById('command-guide-panel');
+    var heading = Array.prototype.find.call(container.querySelectorAll('h2'), function (h) {
+      return h.textContent.trim() === 'Command and flag guide';
+    });
+
+    panel.innerHTML = '';
+    if (heading) {
+      var node = heading;
+      while (node && (node === heading || node.tagName !== 'H2')) {
+        var next = node.nextElementSibling;
+        panel.appendChild(node);
+        node = next;
+      }
+    }
+
+    updateCommandGuideVisibility(id);
+  }
+
+  function updateCommandGuideVisibility(id) {
+    var panel = document.getElementById('command-guide-panel');
+    var toggle = document.getElementById('reference-toggle');
+    var available = id !== '00' && panel.children.length > 0;
+    toggle.disabled = !available;
+    toggle.setAttribute('aria-pressed', available && guideVisible ? 'true' : 'false');
+    panel.classList.toggle('visible', available && guideVisible);
+    document.getElementById('content-wrap').classList.toggle('guide-open', available && guideVisible);
+  }
+
+  function toggleCommandGuide() {
+    if (document.getElementById('reference-toggle').disabled) return;
+    guideVisible = !guideVisible;
+    saveGuidePreference();
+    updateCommandGuideVisibility(currentId);
+    closeMobileNav();
+  }
+
   function pagerHTML(idx) {
     var prev = idx > 0 ? MODULES[idx - 1] : null;
     var next = idx < MODULES.length - 1 ? MODULES[idx + 1] : null;
@@ -1660,6 +1942,7 @@ var MODULES = [
 
     content.innerHTML = headHtml + bodyHtml + footerHtml;
 
+    setupCommandGuide(content, id);
     wrapCodeBlocks(content);
     wrapTables(content);
 
@@ -1702,6 +1985,7 @@ var MODULES = [
 
   document.getElementById('menu-toggle').addEventListener('click', openMobileNav);
   document.getElementById('backdrop').addEventListener('click', closeMobileNav);
+  document.getElementById('reference-toggle').addEventListener('click', toggleCommandGuide);
 
   marked.setOptions({ gfm: true, breaks: false });
 

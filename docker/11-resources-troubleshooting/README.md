@@ -12,6 +12,15 @@ resolved Compose model, inspect container state and networks, then test from
 the narrowest relevant boundary. Avoid deleting resources before collecting
 evidence.
 
+## Command and flag guide
+
+- `docker compose port SERVICE CONTAINER_PORT` prints the host address mapped to
+  a service's container port.
+- `docker stats` streams live CPU, memory, network, and I/O usage for containers;
+  `--no-stream` takes one snapshot and exits.
+- This module reuses Compose's `-f`, `config`, `--quiet`, `up`, `-d`, `--build`,
+  `ps`, `logs`, `exec`, and `down` from Modules 8–9.
+
 ## Hands-on
 
 `broken-compose.yaml` contains two faults. Diagnose them in order without

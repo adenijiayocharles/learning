@@ -11,6 +11,20 @@ is discoverable by its service name.
 A Dockerfile defines how to build an image. A Compose file defines how one or
 more containers run. These files complement rather than replace each other.
 
+## Command and flag guide
+
+- `docker compose -f FILE` runs Compose using the specified YAML file instead
+  of discovering the default file; the option applies to the Compose command
+  that follows it.
+- `config` parses, validates, and prints the resolved Compose model.
+- `up` creates and starts the project's services; `-d` leaves them running in
+  the background and `--build` builds images before starting.
+- `ps` shows project containers, `logs` shows their output, and
+  `exec SERVICE COMMAND` runs a command in a running service container.
+- `docker network ls` and `docker volume ls` list Docker networks and volumes.
+- `down` stops and removes the project's containers and networks;
+  `--volumes` also removes its named volumes and their stored data.
+
 ## Hands-on
 
 Run from `docker/08-compose-fundamentals`.

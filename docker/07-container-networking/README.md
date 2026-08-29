@@ -12,6 +12,15 @@ recreated.
 The visit counter can use Redis when `REDIS_HOST` is set. Redis does not need a
 host-published port because only the web container needs to reach it.
 
+## Command and flag guide
+
+- `docker network create NAME` creates a user-defined network;
+  `docker network inspect NAME` shows its configuration and attached containers,
+  and `docker network rm NAME` deletes an unused network.
+- `--network NAME` connects the new container to that network, where containers
+  can resolve one another by name.
+- `docker exec` is reused here to run a DNS check inside the web container.
+
 ## Hands-on
 
 1. Create a network and start Redis:

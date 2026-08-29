@@ -12,6 +12,17 @@ Tags such as `visit-counter:v1` are mutable names pointing at image content;
 they are not immutable copies. Rebuilding with the same tag moves that tag to
 the new result.
 
+## Command and flag guide
+
+- `--progress=plain` prints the full build-step output instead of the compact
+  interactive display, making cache decisions easier to see.
+- `docker image history IMAGE` shows the instructions and layers that produced
+  an image.
+- `--no-cache` prevents reuse of cached build steps. It is different from
+  `--pull`, which checks for a newer base image.
+- This module reuses `docker build`, `-t`, and inspect's `--format` from earlier
+  modules.
+
 ## Hands-on
 
 Run these commands from `docker/apps/visit-counter`.

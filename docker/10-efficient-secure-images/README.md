@@ -12,6 +12,15 @@ Keep the build context small, avoid unnecessary packages, rebuild regularly,
 and understand that tags are mutable. Pinning a base image digest maximizes
 reproducibility, but creates an explicit update responsibility.
 
+## Command and flag guide
+
+- `docker build --check` evaluates the Dockerfile with build checks and reports
+  issues without performing a normal image build.
+- `-f PATH` selects a Dockerfile whose name or location differs from the default
+  `Dockerfile` in the build context.
+- The remaining Docker commands and flags in this module were introduced in
+  Modules 1–5.
+
 ## Hands-on
 
 Run from `docker/apps/visit-counter`.

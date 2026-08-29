@@ -13,6 +13,20 @@ Docker daemon, which manages images, containers, networks, and volumes. The
 client and daemon may be on different machines, so commands such as bind mounts
 refer to paths visible to the daemon.
 
+## Command and flag guide
+
+- `docker version` reports client and daemon versions; `docker info` reports the
+  daemon's wider configuration and current resource counts.
+- `docker run IMAGE [COMMAND]` creates and starts a new container from an image.
+- `--rm` automatically deletes that container when it stops. It does not delete
+  the image.
+- `docker image ls [IMAGE]` lists local images, optionally filtered by name.
+- `docker image inspect IMAGE` prints detailed image metadata as JSON.
+- `-i` keeps standard input open and `-t` allocates a terminal. The combined
+  `-it` makes an interactive shell behave like a normal terminal.
+- In `alpine:3.22`, `alpine` is the image repository and `3.22` is its tag;
+  the trailing `sh` replaces the image's default command with a shell.
+
 ## Hands-on
 
 1. Confirm both sides are available:
