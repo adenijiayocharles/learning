@@ -11,6 +11,11 @@ is discoverable by its service name.
 A Dockerfile defines how to build an image. A Compose file defines how one or
 more containers run. These files complement rather than replace each other.
 
+Compose treats the YAML file as the desired model for one project. Re-running
+`up` compares that model with existing project resources and creates or replaces
+what is needed. Project-scoped names keep separate Compose applications from
+colliding even when they use common service names such as `web` or `cache`.
+
 ## Command and flag guide
 
 - `docker compose -f FILE` runs Compose using the specified YAML file instead

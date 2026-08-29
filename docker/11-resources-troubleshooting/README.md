@@ -12,6 +12,11 @@ resolved Compose model, inspect container state and networks, then test from
 the narrowest relevant boundary. Avoid deleting resources before collecting
 evidence.
 
+Resource limits are enforced by the host kernel: a CPU limit throttles access,
+while exceeding a hard memory limit can terminate the container. Troubleshoot
+from configuration to runtime evidence, separating “the file is valid” from
+“the service is reachable” and “the application behaves correctly.”
+
 ## Command and flag guide
 
 - `docker compose port SERVICE CONTAINER_PORT` prints the host address mapped to

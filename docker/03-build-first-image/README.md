@@ -12,6 +12,11 @@ that context can be copied. `.dockerignore` excludes files that should not be
 sent to the builder, improving performance and reducing the risk of including
 secrets.
 
+Each Dockerfile instruction produces build state that later instructions build
+upon. Build-time instructions shape the reusable image; runtime settings choose
+what happens when a container starts. A successful build therefore creates an
+artifact, not a running application—`docker run` creates the container from it.
+
 ## Command and flag guide
 
 - `docker build CONTEXT` builds an image from a Dockerfile and the supplied

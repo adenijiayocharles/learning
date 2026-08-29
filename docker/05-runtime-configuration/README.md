@@ -12,6 +12,12 @@ stop signals and its exit ends the container. Exec-form JSON commands avoid an
 extra shell and generally forward signals more predictably than shell-form
 commands.
 
+Runtime configuration belongs to a particular container, not to the image it
+came from. Publishing a port creates a host-to-container forwarding rule;
+setting an environment variable changes process input; overriding the command
+changes the process itself. These choices can vary independently while every
+container still uses identical image content.
+
 ## Command and flag guide
 
 - `-e NAME=VALUE` sets one environment variable in the new container;

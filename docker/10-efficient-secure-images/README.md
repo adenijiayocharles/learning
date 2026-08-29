@@ -12,6 +12,11 @@ Keep the build context small, avoid unnecessary packages, rebuild regularly,
 and understand that tags are mutable. Pinning a base image digest maximizes
 reproducibility, but creates an explicit update responsibility.
 
+Only files copied into the final stage become part of the runtime image, so
+compilers, package caches, and credentials used during a builder stage can stay
+behind. A smaller runtime surface reduces unnecessary software, while a
+non-root user limits what a compromised process can change inside the container.
+
 ## Command and flag guide
 
 - `docker build --check` evaluates the Dockerfile with build checks and reports

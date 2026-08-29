@@ -12,6 +12,12 @@ Tags such as `visit-counter:v1` are mutable names pointing at image content;
 they are not immutable copies. Rebuilding with the same tag moves that tag to
 the new result.
 
+Cache reuse depends on both an instruction and its inputs. A changed `COPY`
+source invalidates that layer and everything after it, while earlier unchanged
+layers remain reusable. Arrange Dockerfiles from stable inputs to frequently
+changing inputs to make the common rebuild path fast without changing the
+resulting application.
+
 ## Command and flag guide
 
 - `--progress=plain` prints the full build-step output instead of the compact

@@ -11,6 +11,11 @@ The main container process determines its lifecycle. When PID 1 exits, the
 container stops. Logs capture the process's standard output and error streams;
 `exec` starts an additional process inside an already-running container.
 
+Container identity survives a stop: its name, configuration, exit status, and
+writable layer remain available for inspection or restart. Removal is the step
+that discards that container state. Treat containers as replaceable in normal
+operation, but inspect failures before removing the evidence.
+
 ## Command and flag guide
 
 - `-d` runs the container in the background (detached mode), while `--name NAME`

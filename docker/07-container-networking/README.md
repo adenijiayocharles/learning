@@ -12,9 +12,36 @@ recreated.
 The visit counter can use Redis when `REDIS_HOST` is set. Redis does not need a
 host-published port because only the web container needs to reach it.
 
+Every container attached to a network receives an interface and an address on
+that network. Docker's embedded DNS maps container or service names to those
+changing addresses. Network attachment controls container-to-container
+reachability; port publishing separately controls traffic entering from the host.
+
+### Network types and when to use them
+
+Docker networks use a **driver**, which determines how container traffic is
+connected and isolated.
+
+| Driver or network | Use it when | Important trade-off |
+| --- | --- | --- |
+| User-defined `bridge` | Containers on one Docker host need private communication and name-based DNS; this is the normal choice for local applications | It does not span multiple Docker hosts; publish only the ports clients outside the network need |
+| Default `bridge` | Running a quick standalone container with no special networking needs | It lacks the convenient isolation and automatic name-based discovery of a user-defined bridge, so avoid it for multi-container applications |
+| `host` | A trusted workload needs the host's network directly, commonly for performance or software that must observe host networking | It removes network isolation, can cause host-port conflicts, and has platform limitations |
+| `none` | A container must have no external or container-to-container network access | The container has only its loopback interface, so it cannot call network services |
+| `overlay` | Swarm services or containers on different Docker hosts must communicate | It requires multi-host orchestration and is unnecessary for a single-host application |
+| `macvlan` | A legacy or specialized workload must appear as a separate physical device with its own MAC address on the local network | It requires careful physical-network configuration and is not the usual application default |
+| `ipvlan` | Containers need direct underlay/VLAN integration but the network should see fewer MAC addresses than with `macvlan` | It is an advanced choice that requires control of addressing and network infrastructure |
+
+Start with a **user-defined bridge** for a multi-container application on one
+host. Move to another driver only when the deployment topology or network
+integration creates a specific requirement. A network driver controls how a
+container connects; `-p` or `--publish` separately controls which container
+ports are exposed through the Docker host.
+
 ## Command and flag guide
 
-- `docker network create NAME` creates a user-defined network;
+- `docker network create NAME` creates a user-defined bridge network by default;
+  add `--driver DRIVER` only when another network type is required.
   `docker network inspect NAME` shows its configuration and attached containers,
   and `docker network rm NAME` deletes an unused network.
 - `--network NAME` connects the new container to that network, where containers
@@ -78,7 +105,9 @@ host-published port because only the web container needs to reach it.
 - Explain why Redis did not need `-p 6379:6379`.
 - Explain why `cache` is safer to depend on than a container IP address.
 - Distinguish network isolation from host port publication.
+- Choose a user-defined bridge, `host`, `none`, or `overlay` network for a given
+  scenario and explain the trade-off.
 
-Official reference: [Bridge network driver](https://docs.docker.com/engine/network/drivers/bridge/)
+Official references: [Docker network drivers](https://docs.docker.com/engine/network/drivers/), [Bridge network driver](https://docs.docker.com/engine/network/drivers/bridge/)
 
 Next: [Module 8 — Compose Fundamentals](../08-compose-fundamentals/)

@@ -12,6 +12,11 @@ registry. Cleanup should target known course resources. Broad commands such as
 `docker system prune` can delete unrelated caches and stopped resources and are
 intentionally not part of this course.
 
+A tag is a movable human-friendly reference; a digest identifies exact image
+content. Registries distribute layers and repository metadata, while `save`
+and `load` package image content for offline transfer. Distribution does not
+include runtime volumes, environment values, or other container state.
+
 ## Command and flag guide
 
 - `docker compose up --wait` waits until services are running or healthy;

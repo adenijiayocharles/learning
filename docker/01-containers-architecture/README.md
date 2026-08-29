@@ -13,6 +13,12 @@ Docker daemon, which manages images, containers, networks, and volumes. The
 client and daemon may be on different machines, so commands such as bind mounts
 refer to paths visible to the daemon.
 
+Images are read-only templates assembled from layers. Starting an image adds a
+thin writable layer for that container, so many containers can share one image
+without sharing their runtime changes. Containers share the host kernel, which
+makes them lighter than virtual machines but means isolation is a boundary to
+configure carefully, not a separate operating system.
+
 ## Command and flag guide
 
 - `docker version` reports client and daemon versions; `docker info` reports the

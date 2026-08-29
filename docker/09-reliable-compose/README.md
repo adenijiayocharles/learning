@@ -12,6 +12,11 @@ Restart policies respond when a container exits or the daemon restarts, with
 different behavior for manual stops. Application retries are still important
 because dependencies can fail after startup.
 
+A health check repeatedly runs a small test inside the container and records
+`starting`, `healthy`, or `unhealthy`; it does not prove every user journey
+works. Startup ordering, restart policy, health reporting, and application
+retry logic solve different failure windows and should reinforce one another.
+
 ## Command and flag guide
 
 - `config --quiet` validates the Compose model without printing it.
