@@ -26,6 +26,8 @@ process needs, specifically to trigger and observe an OOMKill.
 
 ## Hands-on
 
+Run these commands from `kubernetes/08-namespaces-resources/`.
+
 1. **Create the `training` namespace:**
 
    ```bash
@@ -41,9 +43,16 @@ process needs, specifically to trigger and observe an OOMKill.
    kubectl config set-context --current --namespace=training
    ```
 
+   A kubectl **context** stores which cluster, user, and default namespace
+   commands target. `--current` edits the active context; it does not move
+   existing objects between namespaces.
+
    You can always check which namespace you're pointed at with
    `kubectl config view --minify | grep namespace`, and switch back later
    with `kubectl config set-context --current --namespace=default`.
+
+   `--minify` shows only the active context instead of all configured
+   clusters. `| grep namespace` keeps the line containing the default.
 
 3. **Fill in and apply the intentionally under-provisioned Deployment:**
 
@@ -60,6 +69,10 @@ process needs, specifically to trigger and observe an OOMKill.
    kubectl describe pod -l app=hello-app
    ```
 
+   `-l app=hello-app` selects by label because the Pod's generated name is
+   not known in advance. `describe` shows details and Events; it does not
+   change the Pod.
+
    Look for `Last State: Terminated`, `Reason: OOMKilled` in the output.
 
 5. **Check live resource usage** (needs the `metrics-server` addon from
@@ -68,6 +81,10 @@ process needs, specifically to trigger and observe an OOMKill.
    ```bash
    kubectl top pods
    ```
+
+   `top` displays recent CPU and memory measurements collected by
+   metrics-server. Values such as `5m` CPU mean five millicores (0.005 of
+   one CPU core); `Mi` means mebibytes of memory.
 
    If the Pod is crash-looping too fast to catch a metrics sample, that's
    expected — it's dying almost immediately after starting.

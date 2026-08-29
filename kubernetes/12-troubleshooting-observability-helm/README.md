@@ -33,6 +33,10 @@ with versioning and templating layered on top.
 
 ## Hands-on
 
+Run these commands from
+`kubernetes/12-troubleshooting-observability-helm/`. Diagnose one symptom at
+a time: fixing one layer can reveal the next problem, which is normal.
+
 ### Part 1: diagnose and fix (layered — expect to hit these one at a time)
 
 1. **Apply the broken manifest:**
@@ -41,6 +45,10 @@ with versioning and templating layered on top.
    kubectl apply -f manifests/broken-deployment.yaml
    kubectl get pods -l app=hello-app-broken
    ```
+
+   `-l` selects objects with the stated label. The manifest creates a
+   Deployment, so the Pod's generated name will differ; the selector avoids
+   having to know it beforehand.
 
 2. **Bug #1 — it's stuck `Pending`.** Investigate:
 
@@ -70,6 +78,9 @@ with versioning and templating layered on top.
    curl -s http://localhost:5002/config
    ```
 
+   Keep port-forward running in one terminal and execute `curl` in another.
+   `-s` suppresses curl's progress meter so the JSON is easier to read.
+
    `env.MESSAGE` is `null` even though the manifest clearly sets an env
    var — not every bug crashes the Pod. Find the mismatch, fix it, reapply,
    and confirm `env.MESSAGE` now shows the intended text.
@@ -89,6 +100,10 @@ with versioning and templating layered on top.
    helm version
    ```
 
+   `brew` is the Homebrew package manager for macOS. If it is unavailable,
+   follow Helm's installation instructions for your operating system; do not
+   paste an installer command you do not understand.
+
 7. **Scaffold a chart** from the standard template (don't use a third-party
    chart here — public chart catalogs like Bitnami's have had major
    availability/maintenance changes since 2025, so building your own from
@@ -97,6 +112,10 @@ with versioning and templating layered on top.
    ```bash
    helm create hello-chart
    ```
+
+   `create` writes a new chart directory named `hello-chart`; it does not
+   install anything in Kubernetes. The generated example is intentionally
+   larger than the hand-written manifests used earlier.
 
    Look at what it generated: `Chart.yaml` (metadata), `values.yaml`
    (overridable config), `templates/` (the actual manifest templates, using
@@ -126,22 +145,34 @@ with versioning and templating layered on top.
    helm status hello-release
    ```
 
+   `hello-release` is the installed release name; `./hello-chart` is the
+   local chart directory (`./` means "inside the current directory"). The
+   label selector then lists only resources belonging to that release.
+
 10. **Upgrade it** to the `v2` image you built in Module 11 (rebuild it here
     if you no longer have it):
 
     ```bash
-    helm upgrade hello-release ./hello-chart --set image.tag=v2
+   helm upgrade hello-release ./hello-chart --set image.tag=v2
     kubectl rollout status deployment -l app.kubernetes.io/instance=hello-release
-    ```
+   ```
+
+   `upgrade` creates a new release revision. `--set image.tag=v2` overrides
+   the value for this command without editing `values.yaml`. The `-l` on
+   `kubectl rollout status` selects the matching Deployment by label.
 
 11. **Roll back and clean up:**
 
     ```bash
     helm history hello-release
-    helm rollback hello-release 1
+   helm rollback hello-release 1
     helm list
     helm uninstall hello-release
-    ```
+   ```
+
+   `history` lists numbered revisions, `rollback ... 1` restores revision 1,
+   `list` shows installed releases, and `uninstall` removes this release's
+   Kubernetes resources (the local chart directory remains).
 
 ## Verify — and reflect on the whole course
 

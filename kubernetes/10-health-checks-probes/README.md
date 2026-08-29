@@ -29,6 +29,10 @@ on command instead of waiting for a real bug.
 
 ## Hands-on
 
+Run these commands from `kubernetes/10-health-checks-probes/`. A result such
+as `1/1` in the `READY` column means one of the Pod's one containers is ready
+for Service traffic; `Running` alone does not guarantee readiness.
+
 1. **Fill in and apply** the probe fields in
    `manifests/deployment-probes-starter.yaml`:
 
@@ -36,6 +40,9 @@ on command instead of waiting for a real bug.
    kubectl apply -f manifests/deployment-probes-starter.yaml
    kubectl get pods -l app=hello-app
    ```
+
+   `-l app=hello-app` filters to Pods carrying that label. Use the actual
+   generated name from this output wherever the lesson shows `<pod-name>`.
 
    Both Pods should reach `1/1 Ready`.
 
@@ -54,6 +61,10 @@ on command instead of waiting for a real bug.
    curl http://localhost:5050/healthz   # should now return a 500
    ```
 
+   `-X POST` chooses the endpoint's state-changing HTTP method. The `# ...`
+   text is a shell comment explaining the expected result; it is not part of
+   the URL.
+
 3. **Watch the readiness effect first** (faster — 2 failures × 3s period):
 
    ```bash
@@ -67,6 +78,10 @@ on command instead of waiting for a real bug.
    ```bash
    kubectl get endpoints hello-app
    ```
+
+   An Endpoints object contains the ready Pod IP addresses behind a Service.
+   A failing Pod disappearing here is why the Service stops sending it
+   traffic. Newer clusters may also expose the same data as EndpointSlices.
 
    (Only relevant if you still have the Module 5/6 Service around — if not,
    the readiness signal is still visible directly in `kubectl get pods`.)

@@ -29,14 +29,19 @@ which is exactly why Module 4 exists.
 
 ## Hands-on
 
+Run these commands from `kubernetes/03-pods/`. A **manifest** is simply a
+YAML file describing the state you want Kubernetes to create.
+
 1. **Write `pod.yaml` from scratch** in this directory, using the fields
    described above: name it `hello-app`, label it `app: hello-app`, run
    `hello-app:v1` with `imagePullPolicy: IfNotPresent`, and expose
    `containerPort: 5000`. (Compare against `solution/pod.yaml` once you've
    given it a real attempt.)
 
-   Make sure `minikube docker-env` is active in this shell (Module 2, step
-   5) — otherwise the pod won't find the image.
+   First confirm Module 2 built the image inside minikube with
+   `minikube image ls | grep hello-app`. The `docker-env` setting only needs
+   to be active while building the image; Kubernetes can use that stored
+   image afterward from any terminal.
 
 2. **Apply it:**
 
@@ -44,6 +49,10 @@ which is exactly why Module 4 exists.
    kubectl apply -f pod.yaml
    kubectl get pods -w
    ```
+
+   `apply -f pod.yaml` creates the object or updates it to match the file;
+   `-f` means "from this file." `get pods` lists Pods and `-w` keeps the
+   command open to watch changes. Press `Ctrl+C` after it reaches `Running`.
 
    Watch the `STATUS` go `Pending` → `ContainerCreating` → `Running`.
    `Ctrl+C` to stop watching.
@@ -56,11 +65,20 @@ which is exactly why Module 4 exists.
    kubectl exec -it hello-app -- sh
    ```
 
+   `describe` shows detailed state and recent events. `logs` prints the main
+   container's output. `exec` runs `sh` inside it; `-it` attaches an
+   interactive terminal, and `--` separates kubectl options from the
+   in-container command. Type `exit` to leave the shell.
+
 4. **Reach it from your machine:**
 
    ```bash
    kubectl port-forward pod/hello-app 5050:5000
    ```
+
+   `pod/hello-app` identifies the resource. `5050:5000` means "listen on
+   this computer's port 5050 and forward to the Pod's port 5000." Keep this
+   terminal open while making the request from a second terminal.
 
    In another terminal:
 

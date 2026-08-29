@@ -50,6 +50,8 @@ maps and lists of the above.
 
 ## Hands-on
 
+Run these commands from `kubernetes/02-k8s-architecture-first-cluster/`.
+
 1. **Start your cluster:**
 
    ```bash
@@ -57,12 +59,18 @@ maps and lists of the above.
    minikube status
    ```
 
+   `start` creates or resumes the local cluster. `status` reports whether
+   its host, kubelet, API server, and kubeconfig connection are ready.
+
 2. **Talk to it with kubectl:**
 
    ```bash
    kubectl cluster-info
    kubectl get nodes -o wide
    ```
+
+   `cluster-info` prints control-plane addresses. `get nodes` lists machines
+   in the cluster; `-o wide` adds details such as internal IP and runtime.
 
    Notice there's only one node — it's playing both control-plane and
    worker roles.
@@ -73,6 +81,10 @@ maps and lists of the above.
    ```bash
    minikube addons enable metrics-server
    ```
+
+   An addon is an optional cluster component. This command installs and
+   enables metrics-server so later `kubectl top` and autoscaling exercises
+   can read CPU and memory usage.
 
 4. *(Optional)* Open the visual dashboard:
 
@@ -91,6 +103,11 @@ maps and lists of the above.
    eval $(minikube docker-env)
    ```
 
+   `minikube docker-env` prints environment-variable assignments. `$(...)`
+   captures that text and `eval` applies it to the current shell. Because
+   this changes only the current shell, run Docker build commands in this
+   same terminal.
+
    This only affects your **current terminal session** — you'll need to
    re-run it in every new shell you use for this course (or use
    `minikube docker-env` output to check whether it's already set).
@@ -102,6 +119,10 @@ maps and lists of the above.
    docker build -t hello-app:v1 .
    docker images | grep hello-app
    ```
+
+   `|` sends the image list into `grep`, which keeps only lines containing
+   `hello-app`. No output usually means the image was built in a different
+   Docker daemon or under a different name.
 
    That image now lives inside minikube's cluster, ready for Kubernetes to
    run it — no push, no registry, no `imagePullPolicy` headaches as long as

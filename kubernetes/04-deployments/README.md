@@ -23,6 +23,10 @@ knows which Pods belong to it.
 
 ## Hands-on
 
+Run these commands from `kubernetes/04-deployments/`. In examples,
+`<pod-name>` and `<name>` are placeholders: first list the objects, copy a
+real name, and run the command without angle brackets.
+
 1. **Write `deployment.yaml`** in this directory: a Deployment named
    `hello-app`, `replicas: 3`, selector matching label `app: hello-app`, and
    a Pod template using `hello-app:v1` (same container spec as Module 3, now
@@ -37,6 +41,9 @@ knows which Pods belong to it.
    kubectl apply -f deployment.yaml
    kubectl get deployments,replicasets,pods --show-labels
    ```
+
+   A comma asks `get` for several resource types at once. `--show-labels`
+   adds their labels so you can see how selectors connect the objects.
 
    Notice the ReplicaSet's name is `hello-app-<hash>` and each Pod's name is
    `hello-app-<hash>-<random>` — each level's name embeds its parent's.
@@ -59,6 +66,10 @@ knows which Pods belong to it.
    kubectl get pods
    ```
 
+   `scale` changes the live Deployment's desired count; `--replicas=5` is
+   the new count. This is **imperative** because the command changes the
+   cluster without updating your YAML file. A later `apply` can set it back.
+
 5. **Edit live** and watch reconciliation happen in real time:
 
    ```bash
@@ -68,6 +79,10 @@ knows which Pods belong to it.
    Change `replicas: 5` back to `replicas: 3`, save and exit (this opens
    your `$EDITOR` — usually `vi`; save with `:wq`). Watch
    `kubectl get pods -w` in another terminal terminate the extra two.
+
+   `edit` downloads the live YAML into a temporary file and reapplies your
+   saved changes. If the editor is `vi`, press `i` to enter insert mode,
+   then `Esc`, type `:wq`, and press Enter to save and quit.
 
 ## Verify before moving on
 

@@ -8,13 +8,27 @@ See [`PLAN.md`](./PLAN.md) for the original design rationale. Prefer reading
 in a browser? Open [`index.html`](./index.html) for a navigable version of
 this course with progress tracking.
 
-## Prerequisites
+## Before you start
 
-Already installed and verified on this machine:
+You do not need prior Kubernetes knowledge. You should be comfortable opening
+a terminal, changing folders with `cd`, and editing a text file. The course
+explains the Kubernetes and Docker commands it uses.
+
+Install these tools before Module 1, then confirm each command prints a version:
 
 - `docker` — container runtime
 - `minikube` — local Kubernetes cluster
 - `kubectl` — the Kubernetes CLI
+
+```bash
+docker --version
+minikube version
+kubectl version --client
+```
+
+Docker must also be running. On macOS or Windows, open Docker Desktop before
+starting. If a command fails, read the error before continuing; later lessons
+often depend on the resource created by the current step.
 
 No `kind`, no cloud account, no registry — everything runs locally, and
 container images are built straight into minikube's own Docker daemon (see
@@ -34,6 +48,32 @@ Every module folder contains:
 
 Work through the modules in order — later ones assume you've built (and left
 running, or know how to rebuild) the resources from earlier ones.
+
+## How to read the exercises
+
+- Run commands from the module directory unless the lesson says otherwise.
+  A line beginning with `cd` changes your current directory.
+- Do not type placeholders literally. Replace text such as `<pod-name>` with
+  a real value from the preceding `kubectl get pods` command, and omit the
+  angle brackets.
+- Lines beginning with `#` are comments for you, not commands you must run.
+- A trailing `\` continues one command onto the next displayed line.
+- `Ctrl+C` stops a command that is watching, serving, or forwarding a port;
+  it does not undo resources already created in Kubernetes.
+- Kubernetes accepts both long and short resource names: `pods`/`pod`/`po`,
+  `services`/`service`/`svc`, and `deployments`/`deployment`/`deploy`.
+
+The flags used most often are:
+
+- `-f <file>`: read the desired resource from a YAML file.
+- `-n <namespace>`: target a namespace instead of the current default.
+- `-l key=value`: select objects by label.
+- `-o <format>`: choose an output format; `wide` adds columns and `yaml`
+  prints the full object.
+- `-w`: keep watching and print changes until you press `Ctrl+C`.
+- `-it`: attach an interactive terminal to a container.
+- `--`: stop parsing `kubectl` flags; everything after it is the command to
+  run inside the container.
 
 ## Shared demo app
 

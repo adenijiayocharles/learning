@@ -25,6 +25,10 @@ container's own writable layer.
 
 ## Hands-on
 
+Run these commands from `kubernetes/07-volumes-storage/`. A **mount path**
+is the directory where a container sees a volume; the app stores its counter
+in `/data`, so the manifests mount storage there.
+
 ### Part 1: emptyDir is genuinely ephemeral
 
 1. **Fill in and apply** `manifests/pod-emptydir-starter.yaml`:
@@ -43,6 +47,9 @@ container's own writable layer.
    curl -s -X POST http://localhost:5050/count
    curl -s http://localhost:5050/count   # should show {"count": 2}
    ```
+
+   `-s` hides curl's progress meter and `-X POST` chooses the HTTP `POST`
+   method, which this app uses to increment rather than merely read.
 
 2. **Delete and recreate the Pod:**
 
@@ -68,6 +75,10 @@ container's own writable layer.
    kubectl get pvc hello-app-data
    ```
 
+   `pvc` is short for `persistentvolumeclaim`. `Bound` means Kubernetes
+   matched the claim to storage. If it stays `Pending`, run
+   `kubectl describe pvc hello-app-data` and read the Events section.
+
    `STATUS` should become `Bound` within a few seconds.
 
 4. **Fill in and apply the Deployment** that mounts this PVC at `/data`:
@@ -91,6 +102,10 @@ container's own writable layer.
    kubectl delete pod -l app=hello-app-pvc
    kubectl get pods -l app=hello-app-pvc -w
    ```
+
+   `-l app=hello-app-pvc` is a label selector. It saves you from copying the
+   generated Pod name, but could select more than one object, so always
+   check `kubectl get pods -l app=hello-app-pvc` before using it with delete.
 
    Once the new Pod is `Running`, port-forward again and check the count:
 

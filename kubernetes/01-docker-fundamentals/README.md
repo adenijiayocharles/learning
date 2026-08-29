@@ -29,11 +29,16 @@ and enough Docker literacy to build one.
 
 ## Hands-on
 
-All commands below run from `apps/hello-app/`.
+Start in `kubernetes/01-docker-fundamentals/`. All commands below then run
+from the shared `kubernetes/apps/hello-app/` directory.
 
 ```bash
-cd apps/hello-app
+cd ../apps/hello-app
 ```
+
+If your terminal starts at the repository root, this command moves you into
+the shared application directory. Use `pwd` to print your current directory
+and `ls` to list its files whenever you are unsure where you are.
 
 1. **Complete the Dockerfile.** Open `Dockerfile.starter` and fill in each
    `# TODO`. You have everything you need from the Concepts section above
@@ -50,6 +55,10 @@ cd apps/hello-app
    docker build -t hello-app:v1 .
    ```
 
+   `docker build` creates an image from a Dockerfile. `-t hello-app:v1` gives
+   it the name `hello-app` and tag `v1`; the final `.` means "send the current
+   directory to Docker as the build context."
+
    If you're stuck, compare against `Dockerfile.solution` — but try first.
 
 3. **Run it and hit it:**
@@ -60,6 +69,10 @@ cd apps/hello-app
    ```
 
    You should get back JSON with a `hostname`, `app_version`, and `message`.
+
+   Here, `-d` runs in the background, `-p 5050:5000` maps host port 5050 to
+   container port 5000, and `--name` assigns a memorable container name.
+   `curl` makes an HTTP request and prints the response.
 
    > **Why port 5050 and not 5000?** On macOS, port 5000 is usually already
    > claimed by the built-in AirPlay Receiver (Control Center) — you can
@@ -94,11 +107,19 @@ cd apps/hello-app
    app's process *is* PID 1, with essentially nothing else running
    alongside it.
 
+   `docker ps` lists running containers, `docker logs` prints application
+   output, and `docker exec` starts another command in a running container.
+   `-i` keeps input open, `-t` gives you a terminal, and `sh` is the shell
+   program started inside the container.
+
 5. **Clean up the container:**
 
    ```bash
    docker stop hello-app-test && docker rm hello-app-test
    ```
+
+   `stop` asks the process to exit, `rm` removes the stopped container, and
+   `&&` runs the second command only if the first succeeds. The image remains.
 
 6. **See layer caching in action.** Edit `app.py` — change the default
    `message` string. Rebuild:

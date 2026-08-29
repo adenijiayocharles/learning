@@ -31,6 +31,10 @@ value, not the base64 text.
 
 ## Hands-on
 
+Run these commands from `kubernetes/06-configmaps-secrets/`. This lesson's
+Deployment replaces the earlier `hello-app` Deployment because both use the
+same name; `kubectl apply` updates it rather than creating a duplicate.
+
 1. **Fill in and apply the ConfigMap and Secret:**
 
    ```bash
@@ -45,6 +49,10 @@ value, not the base64 text.
    kubectl get secret hello-app-secret -o yaml
    ```
 
+   `-o yaml` requests the full stored object rather than the usual summary
+   table. Do not copy real credentials into a terminal, lesson file, or
+   version-control repository.
+
    Note the `data` field holds base64 text, even though you wrote
    `stringData` (a convenience field — the API server encodes it for you on
    the way in). Decode it yourself to prove the point:
@@ -52,6 +60,11 @@ value, not the base64 text.
    ```bash
    kubectl get secret hello-app-secret -o jsonpath='{.data.API_KEY}' | base64 -d
    ```
+
+   `-o jsonpath=...` extracts only `data.API_KEY`; quotes prevent the shell
+   from interpreting the braces. `|` passes that encoded text to
+   `base64 -d`, which decodes it. Add `; echo` if your prompt appears on the
+   same line as the decoded value.
 
 3. **Fill in and apply the Deployment** that wires the ConfigMap in *two
    ways at once* (as the `MESSAGE` env var, and mounted as files at
@@ -62,12 +75,18 @@ value, not the base64 text.
    kubectl port-forward deployment/hello-app 5050:5000
    ```
 
+   Forwarding to a Deployment makes kubectl choose one of its Pods. Keep
+   this command running and use a second terminal for the following `curl`.
+
    In another terminal (host port `5050` — see Module 1's note on macOS's
    AirPlay Receiver squatting on port 5000):
 
    ```bash
    curl -s http://localhost:5050/config | python3 -m json.tool
    ```
+
+   `curl -s` fetches the response without a progress meter. `|` sends the
+   JSON to Python's built-in `json.tool`, which indents it for readability.
 
    You should see `env.MESSAGE`, both files under `config_files` (including
    `GREETING_LANG`, since the whole ConfigMap was mounted, not just one
@@ -94,6 +113,9 @@ value, not the base64 text.
    ```bash
    kubectl rollout restart deployment hello-app
    ```
+
+   `rollout restart` deliberately replaces the Deployment's Pods. New
+   containers read the current environment-variable value at startup.
 
 ## Verify before moving on
 

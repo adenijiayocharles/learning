@@ -21,6 +21,10 @@ yourself.
 
 ## Hands-on
 
+Run these commands from `kubernetes/09-networking-dns-ingress/`. Confirm the
+previous lesson reset your current namespace to `default` with
+`kubectl config view --minify | grep namespace`.
+
 ### Part 1: cross-namespace DNS
 
 1. Make sure the Module 5 ClusterIP Service (`hello-app`, port 80) still
@@ -30,6 +34,9 @@ yourself.
    kubectl get svc hello-app -n default
    ```
 
+   `-n default` explicitly looks in the `default` namespace, regardless of
+   the default stored in your current kubectl context.
+
 2. From the `training` namespace (created in Module 8), curl it using the
    fully-qualified name:
 
@@ -37,6 +44,11 @@ yourself.
    kubectl run tmp-curl -n training --rm -it --image=curlimages/curl --restart=Never -- \
      curl -s http://hello-app.default.svc.cluster.local/
    ```
+
+   The trailing `\` continues the same command on the next displayed line.
+   Flags before `--` configure the temporary Pod; everything after `--` is
+   the `curl` command run inside it. `-n training` creates the Pod in a
+   different namespace from the Service.
 
    Try the short name `hello-app` (without `.default...`) from the same
    namespace-scoped run command and confirm it does **not** resolve — that's
@@ -50,6 +62,10 @@ yourself.
    minikube addons enable ingress
    kubectl get pods -n ingress-nginx -w
    ```
+
+   The controller is installed in its own `ingress-nginx` namespace. `-w`
+   watches changes; wait until the controller's `READY` column shows all
+   containers ready, then press `Ctrl+C`.
 
    `Ctrl+C` once the controller Pod shows `Running`, `1/1 Ready`.
 
@@ -72,12 +88,18 @@ yourself.
    kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
    ```
 
+   This listens on your computer's port 8080 and forwards to port 80 of the
+   controller Service. Keep it running while using a second terminal.
+
    In another terminal, set the `Host` header manually to simulate a real
    request to `hello.local` (no need to edit `/etc/hosts`):
 
    ```bash
    curl -H "Host: hello.local" http://localhost:8080/
    ```
+
+   `-H` adds an HTTP request header. Ingress reads the `Host` header to choose
+   a rule; it is independent of the `localhost` address used to connect.
 
    You should get the same JSON response as always — now routed through
    the Ingress controller instead of a direct Service hit.

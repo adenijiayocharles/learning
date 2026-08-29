@@ -27,8 +27,14 @@ can just use `<service-name>`.
 
 ## Hands-on
 
+Run these commands from `kubernetes/05-services/`.
+
 Make sure the Module 4 Deployment is still running (`kubectl get deployment
 hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
+
+`../` means "the parent directory." If you did not create that exercise
+file, use the supplied answer instead:
+`kubectl apply -f ../04-deployments/solution/deployment.yaml`.
 
 1. **Fill in and apply the ClusterIP Service:**
 
@@ -38,6 +44,10 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    kubectl get svc hello-app
    ```
 
+   `svc` is kubectl's short name for `service`. `apply -f` creates or updates
+   the Service from the named manifest. Its `CLUSTER-IP` is usable only from
+   inside the cluster; `<none>` under `EXTERNAL-IP` is therefore expected.
+
 2. **Prove load-balancing and DNS work**, from inside the cluster. Launch a
    throwaway Pod with a shell:
 
@@ -45,11 +55,19 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    kubectl run tmp-curl --rm -it --image=curlimages/curl --restart=Never -- sh
    ```
 
+   `run` creates one Pod named `tmp-curl`. `--image` selects its image,
+   `--restart=Never` creates a plain Pod rather than a controller, `-it`
+   attaches your terminal, and `--rm` deletes the Pod when its command ends.
+   The final `-- sh` says to run a shell inside the container.
+
    From inside that shell:
 
    ```sh
    for i in 1 2 3 4 5; do curl -s http://hello-app.default.svc.cluster.local/; echo; done
    ```
+
+   This shell loop repeats the request five times. `curl -s` hides its
+   progress meter, `echo` adds a line break, and `done` ends the loop.
 
    Look at the `hostname` field in each response — it should rotate across
    your 3 replicas' Pod names, proving the Service is spreading traffic.
@@ -75,6 +93,10 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    ```bash
    minikube service hello-app-nodeport --url
    ```
+
+   `minikube service` finds a route from your computer to that Service;
+   `--url` prints the address instead of opening a browser. Run
+   `curl <printed-url>`, replacing the placeholder with the actual URL.
 
    Copy the URL it prints and `curl` it.
 
