@@ -541,13 +541,27 @@ A hands-on, 12-module course for learning Kubernetes from zero to solid working
 knowledge. Every module teaches one concept and has you apply it against a
 real local cluster — no slides, no toy examples that don't run.
 
-## Prerequisites
+## Before you start
 
-Already installed and verified on this machine:
+You do not need prior Kubernetes knowledge. You should be comfortable opening
+a terminal, changing folders with `cd`, and editing a text file. The course
+explains the Kubernetes and Docker commands it uses.
+
+Install these tools before Module 1, then confirm each command prints a version:
 
 - `docker` — container runtime
 - `minikube` — local Kubernetes cluster
 - `kubectl` — the Kubernetes CLI
+
+```bash
+docker --version
+minikube version
+kubectl version --client
+```
+
+Docker must also be running. On macOS or Windows, open Docker Desktop before
+starting. If a command fails, read the error before continuing; later lessons
+often depend on the resource created by the current step.
 
 No `kind`, no cloud account, no registry — everything runs locally, and
 container images are built straight into minikube's own Docker daemon (see
@@ -568,13 +582,39 @@ Every module folder contains:
 Work through the modules in order — later ones assume you've built (and left
 running, or know how to rebuild) the resources from earlier ones.
 
+## How to read the exercises
+
+- Run commands from the module directory unless the lesson says otherwise.
+  A line beginning with `cd` changes your current directory.
+- Do not type placeholders literally. Replace text such as `<pod-name>` with
+  a real value from the preceding `kubectl get pods` command, and omit the
+  angle brackets.
+- Lines beginning with `#` are comments for you, not commands you must run.
+- A trailing `\` continues one command onto the next displayed line.
+- `Ctrl+C` stops a command that is watching, serving, or forwarding a port;
+  it does not undo resources already created in Kubernetes.
+- Kubernetes accepts both long and short resource names: `pods`/`pod`/`po`,
+  `services`/`service`/`svc`, and `deployments`/`deployment`/`deploy`.
+
+The flags used most often are:
+
+- `-f <file>`: read the desired resource from a YAML file.
+- `-n <namespace>`: target a namespace instead of the current default.
+- `-l key=value`: select objects by label.
+- `-o <format>`: choose an output format; `wide` adds columns and `yaml`
+  prints the full object.
+- `-w`: keep watching and print changes until you press `Ctrl+C`.
+- `-it`: attach an interactive terminal to a container.
+- `--`: stop parsing `kubectl` flags; everything after it is the command to
+  run inside the container.
+
 ## Shared demo app
 
-All 12 modules use one app: `apps/hello-app` — a tiny Flask service with just
-enough surface area to demonstrate every concept in the course (env-based
-config, a togglable health check, a file-backed counter). You'll build its
-container image once in Module 1 and reuse it (and a `v2` variant in Module
-11) throughout.
+All 12 modules use one app: `apps/hello-app` — a tiny
+Flask service with just enough surface area to demonstrate every concept in
+the course (env-based config, a togglable health check, a file-backed
+counter). You'll build its container image once in Module 1 and reuse it
+(and a `v2` variant in Module 11) throughout.
 
 ## Modules
 
@@ -635,11 +675,16 @@ and enough Docker literacy to build one.
 
 ## Hands-on
 
-All commands below run from `apps/hello-app/`.
+Start in `kubernetes/01-docker-fundamentals/`. All commands below then run
+from the shared `kubernetes/apps/hello-app/` directory.
 
 ```bash
-cd apps/hello-app
+cd ../apps/hello-app
 ```
+
+If your terminal starts at the repository root, this command moves you into
+the shared application directory. Use `pwd` to print your current directory
+and `ls` to list its files whenever you are unsure where you are.
 
 1. **Complete the Dockerfile.** Open `Dockerfile.starter` and fill in each
    `# TODO`. You have everything you need from the Concepts section above
@@ -656,6 +701,10 @@ cd apps/hello-app
    docker build -t hello-app:v1 .
    ```
 
+   `docker build` creates an image from a Dockerfile. `-t hello-app:v1` gives
+   it the name `hello-app` and tag `v1`; the final `.` means "send the current
+   directory to Docker as the build context."
+
    If you're stuck, compare against `Dockerfile.solution` — but try first.
 
 3. **Run it and hit it:**
@@ -666,6 +715,10 @@ cd apps/hello-app
    ```
 
    You should get back JSON with a `hostname`, `app_version`, and `message`.
+
+   Here, `-d` runs in the background, `-p 5050:5000` maps host port 5050 to
+   container port 5000, and `--name` assigns a memorable container name.
+   `curl` makes an HTTP request and prints the response.
 
    > **Why port 5050 and not 5000?** On macOS, port 5000 is usually already
    > claimed by the built-in AirPlay Receiver (Control Center) — you can
@@ -700,11 +753,19 @@ cd apps/hello-app
    app's process *is* PID 1, with essentially nothing else running
    alongside it.
 
+   `docker ps` lists running containers, `docker logs` prints application
+   output, and `docker exec` starts another command in a running container.
+   `-i` keeps input open, `-t` gives you a terminal, and `sh` is the shell
+   program started inside the container.
+
 5. **Clean up the container:**
 
    ```bash
    docker stop hello-app-test && docker rm hello-app-test
    ```
+
+   `stop` asks the process to exit, `rm` removes the stopped container, and
+   `&&` runs the second command only if the first succeeds. The image remains.
 
 6. **See layer caching in action.** Edit `app.py` — change the default
    `message` string. Rebuild:
@@ -727,6 +788,7 @@ cd apps/hello-app
   and on a teammate's laptop behave identically, but two `python app.py`
   invocations might not?
 - Why did editing `app.py` not require re-running `pip install`?
+
 </script>
 
 <script type="text/markdown" id="md-02">
@@ -780,6 +842,8 @@ maps and lists of the above.
 
 ## Hands-on
 
+Run these commands from `kubernetes/02-k8s-architecture-first-cluster/`.
+
 1. **Start your cluster:**
 
    ```bash
@@ -787,12 +851,18 @@ maps and lists of the above.
    minikube status
    ```
 
+   `start` creates or resumes the local cluster. `status` reports whether
+   its host, kubelet, API server, and kubeconfig connection are ready.
+
 2. **Talk to it with kubectl:**
 
    ```bash
    kubectl cluster-info
    kubectl get nodes -o wide
    ```
+
+   `cluster-info` prints control-plane addresses. `get nodes` lists machines
+   in the cluster; `-o wide` adds details such as internal IP and runtime.
 
    Notice there's only one node — it's playing both control-plane and
    worker roles.
@@ -803,6 +873,10 @@ maps and lists of the above.
    ```bash
    minikube addons enable metrics-server
    ```
+
+   An addon is an optional cluster component. This command installs and
+   enables metrics-server so later `kubectl top` and autoscaling exercises
+   can read CPU and memory usage.
 
 4. *(Optional)* Open the visual dashboard:
 
@@ -821,6 +895,11 @@ maps and lists of the above.
    eval $(minikube docker-env)
    ```
 
+   `minikube docker-env` prints environment-variable assignments. `$(...)`
+   captures that text and `eval` applies it to the current shell. Because
+   this changes only the current shell, run Docker build commands in this
+   same terminal.
+
    This only affects your **current terminal session** — you'll need to
    re-run it in every new shell you use for this course (or use
    `minikube docker-env` output to check whether it's already set).
@@ -833,6 +912,10 @@ maps and lists of the above.
    docker images | grep hello-app
    ```
 
+   `|` sends the image list into `grep`, which keeps only lines containing
+   `hello-app`. No output usually means the image was built in a different
+   Docker daemon or under a different name.
+
    That image now lives inside minikube's cluster, ready for Kubernetes to
    run it — no push, no registry, no `imagePullPolicy` headaches as long as
    you remember to rebuild here (with `docker-env` active) whenever you
@@ -843,6 +926,7 @@ maps and lists of the above.
 - `kubectl get nodes` should show one `Ready` node.
 - `docker images` (with `minikube docker-env` active) should list
   `hello-app:v1`.
+
 </script>
 
 <script type="text/markdown" id="md-03">
@@ -875,14 +959,19 @@ which is exactly why Module 4 exists.
 
 ## Hands-on
 
+Run these commands from `kubernetes/03-pods/`. A **manifest** is simply a
+YAML file describing the state you want Kubernetes to create.
+
 1. **Write `pod.yaml` from scratch** in this directory, using the fields
    described above: name it `hello-app`, label it `app: hello-app`, run
    `hello-app:v1` with `imagePullPolicy: IfNotPresent`, and expose
    `containerPort: 5000`. (Compare against `solution/pod.yaml` once you've
    given it a real attempt.)
 
-   Make sure `minikube docker-env` is active in this shell (Module 2, step
-   5) — otherwise the pod won't find the image.
+   First confirm Module 2 built the image inside minikube with
+   `minikube image ls | grep hello-app`. The `docker-env` setting only needs
+   to be active while building the image; Kubernetes can use that stored
+   image afterward from any terminal.
 
 2. **Apply it:**
 
@@ -890,6 +979,10 @@ which is exactly why Module 4 exists.
    kubectl apply -f pod.yaml
    kubectl get pods -w
    ```
+
+   `apply -f pod.yaml` creates the object or updates it to match the file;
+   `-f` means "from this file." `get pods` lists Pods and `-w` keeps the
+   command open to watch changes. Press `Ctrl+C` after it reaches `Running`.
 
    Watch the `STATUS` go `Pending` → `ContainerCreating` → `Running`.
    `Ctrl+C` to stop watching.
@@ -902,11 +995,20 @@ which is exactly why Module 4 exists.
    kubectl exec -it hello-app -- sh
    ```
 
+   `describe` shows detailed state and recent events. `logs` prints the main
+   container's output. `exec` runs `sh` inside it; `-it` attaches an
+   interactive terminal, and `--` separates kubectl options from the
+   in-container command. Type `exit` to leave the shell.
+
 4. **Reach it from your machine:**
 
    ```bash
    kubectl port-forward pod/hello-app 5050:5000
    ```
+
+   `pod/hello-app` identifies the resource. `5050:5000` means "listen on
+   this computer's port 5050 and forward to the Pod's port 5000." Keep this
+   terminal open while making the request from a second terminal.
 
    In another terminal:
 
@@ -933,6 +1035,7 @@ which is exactly why Module 4 exists.
 - You should be able to explain the difference between a Pod and a
   container in one sentence.
 - You should understand *why* deleting the Pod didn't bring it back.
+
 </script>
 
 <script type="text/markdown" id="md-04">
@@ -959,6 +1062,10 @@ knows which Pods belong to it.
 
 ## Hands-on
 
+Run these commands from `kubernetes/04-deployments/`. In examples,
+`<pod-name>` and `<name>` are placeholders: first list the objects, copy a
+real name, and run the command without angle brackets.
+
 1. **Write `deployment.yaml`** in this directory: a Deployment named
    `hello-app`, `replicas: 3`, selector matching label `app: hello-app`, and
    a Pod template using `hello-app:v1` (same container spec as Module 3, now
@@ -973,6 +1080,9 @@ knows which Pods belong to it.
    kubectl apply -f deployment.yaml
    kubectl get deployments,replicasets,pods --show-labels
    ```
+
+   A comma asks `get` for several resource types at once. `--show-labels`
+   adds their labels so you can see how selectors connect the objects.
 
    Notice the ReplicaSet's name is `hello-app-<hash>` and each Pod's name is
    `hello-app-<hash>-<random>` — each level's name embeds its parent's.
@@ -995,6 +1105,10 @@ knows which Pods belong to it.
    kubectl get pods
    ```
 
+   `scale` changes the live Deployment's desired count; `--replicas=5` is
+   the new count. This is **imperative** because the command changes the
+   cluster without updating your YAML file. A later `apply` can set it back.
+
 5. **Edit live** and watch reconciliation happen in real time:
 
    ```bash
@@ -1005,6 +1119,10 @@ knows which Pods belong to it.
    your `$EDITOR` — usually `vi`; save with `:wq`). Watch
    `kubectl get pods -w` in another terminal terminate the extra two.
 
+   `edit` downloads the live YAML into a temporary file and reapplies your
+   saved changes. If the editor is `vi`, press `i` to enter insert mode,
+   then `Esc`, type `:wq`, and press Enter to save and quit.
+
 ## Verify before moving on
 
 - Run `kubectl describe replicaset <name>` — find the line showing which
@@ -1012,6 +1130,7 @@ knows which Pods belong to it.
 - Explain why the Deployment creates a ReplicaSet instead of managing Pods
   directly (hint: think ahead to what a rolling update needs to keep around
   temporarily).
+
 </script>
 
 <script type="text/markdown" id="md-05">
@@ -1042,8 +1161,14 @@ can just use `<service-name>`.
 
 ## Hands-on
 
+Run these commands from `kubernetes/05-services/`.
+
 Make sure the Module 4 Deployment is still running (`kubectl get deployment
 hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
+
+`../` means "the parent directory." If you did not create that exercise
+file, use the supplied answer instead:
+`kubectl apply -f ../04-deployments/solution/deployment.yaml`.
 
 1. **Fill in and apply the ClusterIP Service:**
 
@@ -1053,6 +1178,10 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    kubectl get svc hello-app
    ```
 
+   `svc` is kubectl's short name for `service`. `apply -f` creates or updates
+   the Service from the named manifest. Its `CLUSTER-IP` is usable only from
+   inside the cluster; `<none>` under `EXTERNAL-IP` is therefore expected.
+
 2. **Prove load-balancing and DNS work**, from inside the cluster. Launch a
    throwaway Pod with a shell:
 
@@ -1060,11 +1189,19 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    kubectl run tmp-curl --rm -it --image=curlimages/curl --restart=Never -- sh
    ```
 
+   `run` creates one Pod named `tmp-curl`. `--image` selects its image,
+   `--restart=Never` creates a plain Pod rather than a controller, `-it`
+   attaches your terminal, and `--rm` deletes the Pod when its command ends.
+   The final `-- sh` says to run a shell inside the container.
+
    From inside that shell:
 
    ```sh
    for i in 1 2 3 4 5; do curl -s http://hello-app.default.svc.cluster.local/; echo; done
    ```
+
+   This shell loop repeats the request five times. `curl -s` hides its
+   progress meter, `echo` adds a line break, and `done` ends the loop.
 
    Look at the `hostname` field in each response — it should rotate across
    your 3 replicas' Pod names, proving the Service is spreading traffic.
@@ -1091,6 +1228,10 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
    minikube service hello-app-nodeport --url
    ```
 
+   `minikube service` finds a route from your computer to that Service;
+   `--url` prints the address instead of opening a browser. Run
+   `curl <printed-url>`, replacing the placeholder with the actual URL.
+
    Copy the URL it prints and `curl` it.
 
 ## Verify before moving on
@@ -1101,6 +1242,7 @@ hello-app`); if not, reapply `../04-deployments/deployment.yaml`.
   `kubectl get endpoints hello-app` before and after.
 - Explain, in one sentence, why `minikube service --url` is used instead of
   `curl $(minikube ip):<nodePort>` directly.
+
 </script>
 
 <script type="text/markdown" id="md-06">
@@ -1135,6 +1277,10 @@ value, not the base64 text.
 
 ## Hands-on
 
+Run these commands from `kubernetes/06-configmaps-secrets/`. This lesson's
+Deployment replaces the earlier `hello-app` Deployment because both use the
+same name; `kubectl apply` updates it rather than creating a duplicate.
+
 1. **Fill in and apply the ConfigMap and Secret:**
 
    ```bash
@@ -1149,6 +1295,10 @@ value, not the base64 text.
    kubectl get secret hello-app-secret -o yaml
    ```
 
+   `-o yaml` requests the full stored object rather than the usual summary
+   table. Do not copy real credentials into a terminal, lesson file, or
+   version-control repository.
+
    Note the `data` field holds base64 text, even though you wrote
    `stringData` (a convenience field — the API server encodes it for you on
    the way in). Decode it yourself to prove the point:
@@ -1156,6 +1306,11 @@ value, not the base64 text.
    ```bash
    kubectl get secret hello-app-secret -o jsonpath='{.data.API_KEY}' | base64 -d
    ```
+
+   `-o jsonpath=...` extracts only `data.API_KEY`; quotes prevent the shell
+   from interpreting the braces. `|` passes that encoded text to
+   `base64 -d`, which decodes it. Add `; echo` if your prompt appears on the
+   same line as the decoded value.
 
 3. **Fill in and apply the Deployment** that wires the ConfigMap in *two
    ways at once* (as the `MESSAGE` env var, and mounted as files at
@@ -1166,12 +1321,18 @@ value, not the base64 text.
    kubectl port-forward deployment/hello-app 5050:5000
    ```
 
+   Forwarding to a Deployment makes kubectl choose one of its Pods. Keep
+   this command running and use a second terminal for the following `curl`.
+
    In another terminal (host port `5050` — see Module 1's note on macOS's
    AirPlay Receiver squatting on port 5000):
 
    ```bash
    curl -s http://localhost:5050/config | python3 -m json.tool
    ```
+
+   `curl -s` fetches the response without a progress meter. `|` sends the
+   JSON to Python's built-in `json.tool`, which indents it for readability.
 
    You should see `env.MESSAGE`, both files under `config_files` (including
    `GREETING_LANG`, since the whole ConfigMap was mounted, not just one
@@ -1199,6 +1360,9 @@ value, not the base64 text.
    kubectl rollout restart deployment hello-app
    ```
 
+   `rollout restart` deliberately replaces the Deployment's Pods. New
+   containers read the current environment-variable value at startup.
+
 ## Verify before moving on
 
 - State, without looking back, which of the two consumption methods
@@ -1206,6 +1370,7 @@ value, not the base64 text.
   restart, and why.
 - Explain why `stringData` in a Secret manifest is just a convenience, not
   a different storage mechanism from `data`.
+
 </script>
 
 <script type="text/markdown" id="md-07">
@@ -1234,6 +1399,10 @@ container's own writable layer.
 
 ## Hands-on
 
+Run these commands from `kubernetes/07-volumes-storage/`. A **mount path**
+is the directory where a container sees a volume; the app stores its counter
+in `/data`, so the manifests mount storage there.
+
 ### Part 1: emptyDir is genuinely ephemeral
 
 1. **Fill in and apply** `manifests/pod-emptydir-starter.yaml`:
@@ -1252,6 +1421,9 @@ container's own writable layer.
    curl -s -X POST http://localhost:5050/count
    curl -s http://localhost:5050/count   # should show {"count": 2}
    ```
+
+   `-s` hides curl's progress meter and `-X POST` chooses the HTTP `POST`
+   method, which this app uses to increment rather than merely read.
 
 2. **Delete and recreate the Pod:**
 
@@ -1277,6 +1449,10 @@ container's own writable layer.
    kubectl get pvc hello-app-data
    ```
 
+   `pvc` is short for `persistentvolumeclaim`. `Bound` means Kubernetes
+   matched the claim to storage. If it stays `Pending`, run
+   `kubectl describe pvc hello-app-data` and read the Events section.
+
    `STATUS` should become `Bound` within a few seconds.
 
 4. **Fill in and apply the Deployment** that mounts this PVC at `/data`:
@@ -1301,6 +1477,10 @@ container's own writable layer.
    kubectl get pods -l app=hello-app-pvc -w
    ```
 
+   `-l app=hello-app-pvc` is a label selector. It saves you from copying the
+   generated Pod name, but could select more than one object, so always
+   check `kubectl get pods -l app=hello-app-pvc` before using it with delete.
+
    Once the new Pod is `Running`, port-forward again and check the count:
 
    ```bash
@@ -1318,6 +1498,7 @@ container's own writable layer.
 - Name one thing that would make the emptyDir data survive a Pod restart
   and one thing that would still lose it even with a PVC in place. (Hint
   for the second one: what happens if you `minikube delete`?)
+
 </script>
 
 <script type="text/markdown" id="md-08">
@@ -1347,6 +1528,8 @@ process needs, specifically to trigger and observe an OOMKill.
 
 ## Hands-on
 
+Run these commands from `kubernetes/08-namespaces-resources/`.
+
 1. **Create the `training` namespace:**
 
    ```bash
@@ -1362,9 +1545,16 @@ process needs, specifically to trigger and observe an OOMKill.
    kubectl config set-context --current --namespace=training
    ```
 
+   A kubectl **context** stores which cluster, user, and default namespace
+   commands target. `--current` edits the active context; it does not move
+   existing objects between namespaces.
+
    You can always check which namespace you're pointed at with
    `kubectl config view --minify | grep namespace`, and switch back later
    with `kubectl config set-context --current --namespace=default`.
+
+   `--minify` shows only the active context instead of all configured
+   clusters. `| grep namespace` keeps the line containing the default.
 
 3. **Fill in and apply the intentionally under-provisioned Deployment:**
 
@@ -1381,6 +1571,10 @@ process needs, specifically to trigger and observe an OOMKill.
    kubectl describe pod -l app=hello-app
    ```
 
+   `-l app=hello-app` selects by label because the Pod's generated name is
+   not known in advance. `describe` shows details and Events; it does not
+   change the Pod.
+
    Look for `Last State: Terminated`, `Reason: OOMKilled` in the output.
 
 5. **Check live resource usage** (needs the `metrics-server` addon from
@@ -1389,6 +1583,10 @@ process needs, specifically to trigger and observe an OOMKill.
    ```bash
    kubectl top pods
    ```
+
+   `top` displays recent CPU and memory measurements collected by
+   metrics-server. Values such as `5m` CPU mean five millicores (0.005 of
+   one CPU core); `Mi` means mebibytes of memory.
 
    If the Pod is crash-looping too fast to catch a metrics sample, that's
    expected — it's dying almost immediately after starting.
@@ -1419,6 +1617,7 @@ process needs, specifically to trigger and observe an OOMKill.
 - Explain why `requests` matters even when a node has plenty of free
   capacity right now (hint: what is the scheduler trying to prevent for the
   *future*?).
+
 </script>
 
 <script type="text/markdown" id="md-09">
@@ -1443,6 +1642,10 @@ yourself.
 
 ## Hands-on
 
+Run these commands from `kubernetes/09-networking-dns-ingress/`. Confirm the
+previous lesson reset your current namespace to `default` with
+`kubectl config view --minify | grep namespace`.
+
 ### Part 1: cross-namespace DNS
 
 1. Make sure the Module 5 ClusterIP Service (`hello-app`, port 80) still
@@ -1452,6 +1655,9 @@ yourself.
    kubectl get svc hello-app -n default
    ```
 
+   `-n default` explicitly looks in the `default` namespace, regardless of
+   the default stored in your current kubectl context.
+
 2. From the `training` namespace (created in Module 8), curl it using the
    fully-qualified name:
 
@@ -1459,6 +1665,11 @@ yourself.
    kubectl run tmp-curl -n training --rm -it --image=curlimages/curl --restart=Never -- \
      curl -s http://hello-app.default.svc.cluster.local/
    ```
+
+   The trailing `\` continues the same command on the next displayed line.
+   Flags before `--` configure the temporary Pod; everything after `--` is
+   the `curl` command run inside it. `-n training` creates the Pod in a
+   different namespace from the Service.
 
    Try the short name `hello-app` (without `.default...`) from the same
    namespace-scoped run command and confirm it does **not** resolve — that's
@@ -1472,6 +1683,10 @@ yourself.
    minikube addons enable ingress
    kubectl get pods -n ingress-nginx -w
    ```
+
+   The controller is installed in its own `ingress-nginx` namespace. `-w`
+   watches changes; wait until the controller's `READY` column shows all
+   containers ready, then press `Ctrl+C`.
 
    `Ctrl+C` once the controller Pod shows `Running`, `1/1 Ready`.
 
@@ -1494,12 +1709,18 @@ yourself.
    kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
    ```
 
+   This listens on your computer's port 8080 and forwards to port 80 of the
+   controller Service. Keep it running while using a second terminal.
+
    In another terminal, set the `Host` header manually to simulate a real
    request to `hello.local` (no need to edit `/etc/hosts`):
 
    ```bash
    curl -H "Host: hello.local" http://localhost:8080/
    ```
+
+   `-H` adds an HTTP request header. Ingress reads the `Host` header to choose
+   a rule; it is independent of the `localhost` address used to connect.
 
    You should get the same JSON response as always — now routed through
    the Ingress controller instead of a direct Service hit.
@@ -1520,6 +1741,7 @@ yourself.
   but needs the full DNS name from a different namespace.
 - Explain what an Ingress *resource* actually is, and why it does nothing
   on a cluster with no ingress controller installed.
+
 </script>
 
 <script type="text/markdown" id="md-10">
@@ -1552,6 +1774,10 @@ on command instead of waiting for a real bug.
 
 ## Hands-on
 
+Run these commands from `kubernetes/10-health-checks-probes/`. A result such
+as `1/1` in the `READY` column means one of the Pod's one containers is ready
+for Service traffic; `Running` alone does not guarantee readiness.
+
 1. **Fill in and apply** the probe fields in
    `manifests/deployment-probes-starter.yaml`:
 
@@ -1559,6 +1785,9 @@ on command instead of waiting for a real bug.
    kubectl apply -f manifests/deployment-probes-starter.yaml
    kubectl get pods -l app=hello-app
    ```
+
+   `-l app=hello-app` filters to Pods carrying that label. Use the actual
+   generated name from this output wherever the lesson shows `<pod-name>`.
 
    Both Pods should reach `1/1 Ready`.
 
@@ -1577,6 +1806,10 @@ on command instead of waiting for a real bug.
    curl http://localhost:5050/healthz   # should now return a 500
    ```
 
+   `-X POST` chooses the endpoint's state-changing HTTP method. The `# ...`
+   text is a shell comment explaining the expected result; it is not part of
+   the URL.
+
 3. **Watch the readiness effect first** (faster — 2 failures × 3s period):
 
    ```bash
@@ -1590,6 +1823,10 @@ on command instead of waiting for a real bug.
    ```bash
    kubectl get endpoints hello-app
    ```
+
+   An Endpoints object contains the ready Pod IP addresses behind a Service.
+   A failing Pod disappearing here is why the Service stops sending it
+   traffic. Newer clusters may also expose the same data as EndpointSlices.
 
    (Only relevant if you still have the Module 5/6 Service around — if not,
    the readiness signal is still visible directly in `kubectl get pods`.)
@@ -1616,6 +1853,7 @@ on command instead of waiting for a real bug.
 - If you set `initialDelaySeconds: 0` on a liveness probe for an app that
   genuinely takes 30 seconds to boot, what would go wrong, and which probe
   type exists specifically to prevent that?
+
 </script>
 
 <script type="text/markdown" id="md-11">
@@ -1642,6 +1880,10 @@ they report ready — this is what makes zero-downtime deploys possible.
 
 ## Hands-on
 
+Run these commands from `kubernetes/11-scaling-rolling-updates/`. This lesson
+needs the `hello-app` Service from Module 5; if it is missing, apply
+`../05-services/solution/service-clusterip.yaml` before generating load.
+
 ### Part 1: HPA and load-based autoscaling
 
 1. **Make sure `hello-app` is running in the `default` namespace** with a
@@ -1652,6 +1894,10 @@ they report ready — this is what makes zero-downtime deploys possible.
    kubectl config set-context --current --namespace=default
    kubectl set resources deployment hello-app --requests=cpu=50m --limits=cpu=200m
    ```
+
+   `set resources` edits the live Pod template. `50m` means 50 millicores,
+   or 0.05 CPU core; `200m` means 0.2 core. `--requests` is the scheduled
+   baseline and `--limits` is the maximum CPU time available.
 
    If no `hello-app` Deployment exists in `default`, reapply
    `../04-deployments/solution/deployment.yaml` first, then run the command
@@ -1664,6 +1910,9 @@ they report ready — this is what makes zero-downtime deploys possible.
    kubectl get hpa hello-app -w
    ```
 
+   `hpa` is short for `horizontalpodautoscaler`; `-w` watches it. A temporary
+   `<unknown>` target is normal while metrics-server gathers samples.
+
    Leave this running in its own terminal — you'll watch `REPLICAS` and
    `TARGETS` (current vs. target CPU%) change live.
 
@@ -1674,6 +1923,11 @@ they report ready — this is what makes zero-downtime deploys possible.
    kubectl run load-generator --image=busybox:1.36 --restart=Never -it --rm -- \
      /bin/sh -c "while true; do wget -q -O- http://hello-app.default.svc.cluster.local/; done"
    ```
+
+   `/bin/sh -c` asks the container's shell to interpret the quoted loop.
+   `while true` repeats until `Ctrl+C`; `wget -q` hides progress and `-O-`
+   writes each response to standard output instead of a file. `--rm` removes
+   the temporary Pod after it exits.
 
    Watch the HPA terminal — within a minute or two, `TARGETS` should climb
    and `REPLICAS` should scale up toward `maxReplicas`.
@@ -1702,6 +1956,10 @@ they report ready — this is what makes zero-downtime deploys possible.
    kubectl rollout status deployment/hello-app
    ```
 
+   The value before `=` is the container name in the Pod template; the value
+   after it is the new image and tag. `rollout status` waits and reports
+   whether the replacement Pods become ready.
+
 7. **Watch old and new versions briefly coexist**, in another terminal,
    while the rollout is in progress:
 
@@ -1726,12 +1984,18 @@ they report ready — this is what makes zero-downtime deploys possible.
    kill %1                          # stop the background port-forward
    ```
 
+   `&` runs port-forward in the background so the same terminal can run
+   curl. `%1` refers to shell job 1. If your shell reports a different job
+   number, use the number it printed or press `Ctrl+C` in a foreground
+   port-forward instead.
+
 ## Verify before moving on
 
 - Explain why the HPA couldn't compute anything before you set a CPU
   `request` on the Deployment.
 - Explain why scale-up and scale-down aren't symmetric in responsiveness,
   and why that asymmetry is a reasonable default.
+
 </script>
 
 <script type="text/markdown" id="md-12">
@@ -1768,6 +2032,10 @@ with versioning and templating layered on top.
 
 ## Hands-on
 
+Run these commands from
+`kubernetes/12-troubleshooting-observability-helm/`. Diagnose one symptom at
+a time: fixing one layer can reveal the next problem, which is normal.
+
 ### Part 1: diagnose and fix (layered — expect to hit these one at a time)
 
 1. **Apply the broken manifest:**
@@ -1776,6 +2044,10 @@ with versioning and templating layered on top.
    kubectl apply -f manifests/broken-deployment.yaml
    kubectl get pods -l app=hello-app-broken
    ```
+
+   `-l` selects objects with the stated label. The manifest creates a
+   Deployment, so the Pod's generated name will differ; the selector avoids
+   having to know it beforehand.
 
 2. **Bug #1 — it's stuck `Pending`.** Investigate:
 
@@ -1805,6 +2077,9 @@ with versioning and templating layered on top.
    curl -s http://localhost:5002/config
    ```
 
+   Keep port-forward running in one terminal and execute `curl` in another.
+   `-s` suppresses curl's progress meter so the JSON is easier to read.
+
    `env.MESSAGE` is `null` even though the manifest clearly sets an env
    var — not every bug crashes the Pod. Find the mismatch, fix it, reapply,
    and confirm `env.MESSAGE` now shows the intended text.
@@ -1824,6 +2099,10 @@ with versioning and templating layered on top.
    helm version
    ```
 
+   `brew` is the Homebrew package manager for macOS. If it is unavailable,
+   follow Helm's installation instructions for your operating system; do not
+   paste an installer command you do not understand.
+
 7. **Scaffold a chart** from the standard template (don't use a third-party
    chart here — public chart catalogs like Bitnami's have had major
    availability/maintenance changes since 2025, so building your own from
@@ -1832,6 +2111,10 @@ with versioning and templating layered on top.
    ```bash
    helm create hello-chart
    ```
+
+   `create` writes a new chart directory named `hello-chart`; it does not
+   install anything in Kubernetes. The generated example is intentionally
+   larger than the hand-written manifests used earlier.
 
    Look at what it generated: `Chart.yaml` (metadata), `values.yaml`
    (overridable config), `templates/` (the actual manifest templates, using
@@ -1861,22 +2144,34 @@ with versioning and templating layered on top.
    helm status hello-release
    ```
 
+   `hello-release` is the installed release name; `./hello-chart` is the
+   local chart directory (`./` means "inside the current directory"). The
+   label selector then lists only resources belonging to that release.
+
 10. **Upgrade it** to the `v2` image you built in Module 11 (rebuild it here
     if you no longer have it):
 
     ```bash
-    helm upgrade hello-release ./hello-chart --set image.tag=v2
+   helm upgrade hello-release ./hello-chart --set image.tag=v2
     kubectl rollout status deployment -l app.kubernetes.io/instance=hello-release
-    ```
+   ```
+
+   `upgrade` creates a new release revision. `--set image.tag=v2` overrides
+   the value for this command without editing `values.yaml`. The `-l` on
+   `kubectl rollout status` selects the matching Deployment by label.
 
 11. **Roll back and clean up:**
 
     ```bash
     helm history hello-release
-    helm rollback hello-release 1
+   helm rollback hello-release 1
     helm list
     helm uninstall hello-release
-    ```
+   ```
+
+   `history` lists numbered revisions, `rollback ... 1` restores revision 1,
+   `list` shows installed releases, and `uninstall` removes this release's
+   Kubernetes resources (the local chart directory remains).
 
 ## Verify — and reflect on the whole course
 
