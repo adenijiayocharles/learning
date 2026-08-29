@@ -708,6 +708,12 @@ Docker daemon, which manages images, containers, networks, and volumes. The
 client and daemon may be on different machines, so commands such as bind mounts
 refer to paths visible to the daemon.
 
+Images are read-only templates assembled from layers. Starting an image adds a
+thin writable layer for that container, so many containers can share one image
+without sharing their runtime changes. Containers share the host kernel, which
+makes them lighter than virtual machines but means isolation is a boundary to
+configure carefully, not a separate operating system.
+
 ## Command and flag guide
 
 - `docker version` reports client and daemon versions; `docker info` reports the
@@ -785,6 +791,11 @@ writable layer and metadata. `docker ps` lists running containers;
 The main container process determines its lifecycle. When PID 1 exits, the
 container stops. Logs capture the process's standard output and error streams;
 `exec` starts an additional process inside an already-running container.
+
+Container identity survives a stop: its name, configuration, exit status, and
+writable layer remain available for inspection or restart. Removal is the step
+that discards that container state. Treat containers as replaceable in normal
+operation, but inspect failures before removing the evidence.
 
 ## Command and flag guide
 
@@ -873,6 +884,11 @@ that context can be copied. `.dockerignore` excludes files that should not be
 sent to the builder, improving performance and reducing the risk of including
 secrets.
 
+Each Dockerfile instruction produces build state that later instructions build
+upon. Build-time instructions shape the reusable image; runtime settings choose
+what happens when a container starts. A successful build therefore creates an
+artifact, not a running application—`docker run` creates the container from it.
+
 ## Command and flag guide
 
 - `docker build CONTEXT` builds an image from a Dockerfile and the supplied
@@ -943,6 +959,12 @@ not reinstall every dependency.
 Tags such as `visit-counter:v1` are mutable names pointing at image content;
 they are not immutable copies. Rebuilding with the same tag moves that tag to
 the new result.
+
+Cache reuse depends on both an instruction and its inputs. A changed `COPY`
+source invalidates that layer and everything after it, while earlier unchanged
+layers remain reusable. Arrange Dockerfiles from stable inputs to frequently
+changing inputs to make the common rebuild path fast without changing the
+resulting application.
 
 ## Command and flag guide
 
@@ -1018,6 +1040,12 @@ The image's `CMD` starts `python app.py` as PID 1. PID 1 receives container
 stop signals and its exit ends the container. Exec-form JSON commands avoid an
 extra shell and generally forward signals more predictably than shell-form
 commands.
+
+Runtime configuration belongs to a particular container, not to the image it
+came from. Publishing a port creates a host-to-container forwarding rule;
+setting an environment variable changes process input; overriding the command
+changes the process itself. These choices can vary independently while every
+container still uses identical image content.
 
 ## Command and flag guide
 
@@ -1101,6 +1129,26 @@ source or configuration files, but couples the container to the host layout.
 Prefer the explicit `--mount` syntax in learning material. Bind mounts are
 writable by default, so use `readonly` when the container only needs to read.
 
+Storage lifetime is separate from container lifetime. A named volume can be
+attached to successive containers and is portable across Compose recreations
+on the same Docker host. A bind mount exposes an exact host path instead, giving
+direct access but also making permissions and path availability host-dependent.
+
+### Mount types and when to use them
+
+| Type | Data location and lifetime | Use it when | Avoid it when |
+| --- | --- | --- | --- |
+| Named volume | Docker manages the host location; data survives container removal until the volume is removed | Persisting databases, queues, uploads, or other application data | People or host tools must edit the files directly |
+| Anonymous volume | Docker manages the location and generates the name; it can outlive its container unless removed with it | An image needs disposable Docker-managed storage and you do not need to reuse it by name | Data must be easy to identify, reuse, back up, or clean up |
+| Bind mount | An exact host file or directory is mounted; its data follows the host path's lifetime | Sharing source code, configuration, certificates, or generated output with the host | The workload must be portable across hosts or isolated from host filesystem changes |
+| `tmpfs` mount | Data is kept in host memory and disappears when the container stops or restarts | Temporary caches, scratch data, or sensitive files that should not be written to disk | The data must persist or may grow beyond available memory |
+
+For most persistent application data, start with a **named volume**. Use a
+**bind mount** when direct host access is the requirement, and make it read-only
+when the container does not need to change it. Use **`tmpfs`** only for
+deliberately temporary data. Data left in the container's writable layer is not
+a mount type and should not be used for data that must survive container removal.
+
 ## Command and flag guide
 
 - `docker volume create NAME` creates Docker-managed persistent storage;
@@ -1108,8 +1156,9 @@ writable by default, so use `readonly` when the container only needs to read.
   `docker volume rm NAME` deletes it when no container uses it.
 - `--mount` attaches storage to a container. Its comma-separated fields describe
   the mount: `type=volume` uses a named volume, `type=bind` uses a host path,
-  `src` is the source, `dst` is the container path, and `readonly` prevents
-  writes through the mount.
+  and `type=tmpfs` uses memory-backed temporary storage. `src` is the source
+  (and is omitted for `tmpfs`), `dst` is the container path, and `readonly`
+  prevents writes through the mount.
 - `$PWD` is expanded by the host shell to the current directory before Docker
   receives the bind-mount source path.
 
@@ -1170,10 +1219,11 @@ writable by default, so use `readonly` when the container only needs to read.
 ## Verify
 
 - Choose a named volume for database data and a bind mount for editable source.
+- Identify when an anonymous volume or `tmpfs` mount is appropriate.
 - Explain why read-only bind mounts reduce risk.
 - Explain why removing a container does not automatically remove its volume.
 
-Official references: [Docker storage](https://docs.docker.com/engine/storage/), [Bind mounts](https://docs.docker.com/engine/storage/bind-mounts/)
+Official references: [Docker storage](https://docs.docker.com/engine/storage/), [Volumes](https://docs.docker.com/engine/storage/volumes/), [Bind mounts](https://docs.docker.com/engine/storage/bind-mounts/), [`tmpfs` mounts](https://docs.docker.com/engine/storage/tmpfs/)
 
 Next: [Module 7 — Container Networking](#07)
 </script>
@@ -1191,9 +1241,36 @@ recreated.
 The visit counter can use Redis when `REDIS_HOST` is set. Redis does not need a
 host-published port because only the web container needs to reach it.
 
+Every container attached to a network receives an interface and an address on
+that network. Docker's embedded DNS maps container or service names to those
+changing addresses. Network attachment controls container-to-container
+reachability; port publishing separately controls traffic entering from the host.
+
+### Network types and when to use them
+
+Docker networks use a **driver**, which determines how container traffic is
+connected and isolated.
+
+| Driver or network | Use it when | Important trade-off |
+| --- | --- | --- |
+| User-defined `bridge` | Containers on one Docker host need private communication and name-based DNS; this is the normal choice for local applications | It does not span multiple Docker hosts; publish only the ports clients outside the network need |
+| Default `bridge` | Running a quick standalone container with no special networking needs | It lacks the convenient isolation and automatic name-based discovery of a user-defined bridge, so avoid it for multi-container applications |
+| `host` | A trusted workload needs the host's network directly, commonly for performance or software that must observe host networking | It removes network isolation, can cause host-port conflicts, and has platform limitations |
+| `none` | A container must have no external or container-to-container network access | The container has only its loopback interface, so it cannot call network services |
+| `overlay` | Swarm services or containers on different Docker hosts must communicate | It requires multi-host orchestration and is unnecessary for a single-host application |
+| `macvlan` | A legacy or specialized workload must appear as a separate physical device with its own MAC address on the local network | It requires careful physical-network configuration and is not the usual application default |
+| `ipvlan` | Containers need direct underlay/VLAN integration but the network should see fewer MAC addresses than with `macvlan` | It is an advanced choice that requires control of addressing and network infrastructure |
+
+Start with a **user-defined bridge** for a multi-container application on one
+host. Move to another driver only when the deployment topology or network
+integration creates a specific requirement. A network driver controls how a
+container connects; `-p` or `--publish` separately controls which container
+ports are exposed through the Docker host.
+
 ## Command and flag guide
 
-- `docker network create NAME` creates a user-defined network;
+- `docker network create NAME` creates a user-defined bridge network by default;
+  add `--driver DRIVER` only when another network type is required.
   `docker network inspect NAME` shows its configuration and attached containers,
   and `docker network rm NAME` deletes an unused network.
 - `--network NAME` connects the new container to that network, where containers
@@ -1257,8 +1334,10 @@ host-published port because only the web container needs to reach it.
 - Explain why Redis did not need `-p 6379:6379`.
 - Explain why `cache` is safer to depend on than a container IP address.
 - Distinguish network isolation from host port publication.
+- Choose a user-defined bridge, `host`, `none`, or `overlay` network for a given
+  scenario and explain the trade-off.
 
-Official reference: [Bridge network driver](https://docs.docker.com/engine/network/drivers/bridge/)
+Official references: [Docker network drivers](https://docs.docker.com/engine/network/drivers/), [Bridge network driver](https://docs.docker.com/engine/network/drivers/bridge/)
 
 Next: [Module 8 — Compose Fundamentals](#08)
 </script>
@@ -1274,6 +1353,11 @@ is discoverable by its service name.
 
 A Dockerfile defines how to build an image. A Compose file defines how one or
 more containers run. These files complement rather than replace each other.
+
+Compose treats the YAML file as the desired model for one project. Re-running
+`up` compares that model with existing project resources and creates or replaces
+what is needed. Project-scoped names keep separate Compose applications from
+colliding even when they use common service names such as `web` or `cache`.
 
 ## Command and flag guide
 
@@ -1362,6 +1446,11 @@ Restart policies respond when a container exits or the daemon restarts, with
 different behavior for manual stops. Application retries are still important
 because dependencies can fail after startup.
 
+A health check repeatedly runs a small test inside the container and records
+`starting`, `healthy`, or `unhealthy`; it does not prove every user journey
+works. Startup ordering, restart policy, health reporting, and application
+retry logic solve different failure windows and should reinforce one another.
+
 ## Command and flag guide
 
 - `config --quiet` validates the Compose model without printing it.
@@ -1438,6 +1527,11 @@ Run application processes as a non-root user unless they genuinely need root.
 Keep the build context small, avoid unnecessary packages, rebuild regularly,
 and understand that tags are mutable. Pinning a base image digest maximizes
 reproducibility, but creates an explicit update responsibility.
+
+Only files copied into the final stage become part of the runtime image, so
+compilers, package caches, and credentials used during a builder stage can stay
+behind. A smaller runtime surface reduces unnecessary software, while a
+non-root user limits what a compromised process can change inside the container.
 
 ## Command and flag guide
 
@@ -1519,6 +1613,11 @@ Use a consistent debugging loop: inspect project status, read logs, inspect the
 resolved Compose model, inspect container state and networks, then test from
 the narrowest relevant boundary. Avoid deleting resources before collecting
 evidence.
+
+Resource limits are enforced by the host kernel: a CPU limit throttles access,
+while exceeding a hard memory limit can terminate the container. Troubleshoot
+from configuration to runtime evidence, separating “the file is valid” from
+“the service is reachable” and “the application behaves correctly.”
 
 ## Command and flag guide
 
@@ -1606,6 +1705,11 @@ and repository, so that exercise is optional.
 registry. Cleanup should target known course resources. Broad commands such as
 `docker system prune` can delete unrelated caches and stopped resources and are
 intentionally not part of this course.
+
+A tag is a movable human-friendly reference; a digest identifies exact image
+content. Registries distribute layers and repository metadata, while `save`
+and `load` package image content for offline transfer. Distribution does not
+include runtime volumes, environment values, or other container state.
 
 ## Command and flag guide
 
